@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>닉네임 입력</title>
+    <script>
+        function checkNickname() {
+            let nickname = document.getElementById("nickname").value;
+            fetch(`/accounts/check-nickname/?nickname=${nickname}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("nickname-message").innerText = data.message || data.error;
+                    if (data.message) {
+                        document.getElementById("submit-btn").disabled = false;
+                    } else {
+                        document.getElementById("submit-btn").disabled = true;
+                    }
+                });
+        }
+    </script>
+</head>
+<body>
+    <h2>{{ kakao_nickname }}님 안녕하세요!</h2>
+    <p>게임에서 사용할 닉네임을 입력해주세요.</p>
+    
+    <form method="post" action="/accounts/kakao/save-nickname/">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ email }}">
+        <input type="text" id="nickname" name="nickname" placeholder="닉네임 입력" required>
+        <button type="button" onclick="checkNickname()">중복 확인</button>
+        <p id="nickname-message"></p>
+        <button type="submit" id="submit-btn" disabled>확인</button>
+    </form>
+</body>
+</html>

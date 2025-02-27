@@ -1,0 +1,19 @@
+# 환경 변수
+.env
+
+# 가상 환경
+venv/
+*.pyc
+__pycache__/
+
+# 데이터베이스 파일 (로컬용)
+db.sqlite3
+
+# Django static & media files
+/static/
+/media/
+
+# IDE 및 시스템 파일
+.vscode/
+.idea/
+.DS_Store
