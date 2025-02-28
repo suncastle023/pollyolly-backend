@@ -149,16 +149,14 @@ SOCIAL_AUTH_KAKAO_KEY = os.environ.get("SOCIAL_AUTH_KAKAO_KEY", "")
 SOCIAL_AUTH_KAKAO_SECRET = os.environ.get("SOCIAL_AUTH_KAKAO_SECRET", "")
 SOCIAL_AUTH_KAKAO_REDIRECT_URI = os.environ.get("SOCIAL_AUTH_KAKAO_REDIRECT_URI", "")
 
-LOGIN_REDIRECT_URL = "http://localhost:5173/main"
-LOGOUT_REDIRECT_URL = "http://localhost:5173/"
 
 # ✅ CORS 설정 (모든 출처 허용 X, 명확한 출처 지정)
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Flutter 웹앱 실행 주소
     "http://127.0.0.1:5173",
-    "http://192.168.45.244:5173",
-    "http://172.30.1.61:8000",
+    "http://pollyolly.store", 
+    "http://3.35.214.190",   
 ]
 
 CSRF_COOKIE_NAME = "csrftoken"
