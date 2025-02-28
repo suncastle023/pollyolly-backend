@@ -92,29 +92,15 @@ class SaveKakaoNicknameView(APIView):
         return response
 
 
-
+# ✅ 카카오 로그인 
 class KakaoLoginView(APIView):
     def get(self, request):
         kakao_auth_url = f"https://kauth.kakao.com/oauth/authorize?client_id={settings.SOCIAL_AUTH_KAKAO_KEY}&redirect_uri={settings.SOCIAL_AUTH_KAKAO_REDIRECT_URI}&response_type=code"
         return JsonResponse({"auth_url": kakao_auth_url})
 
 
-from django.contrib.auth import get_user_model, login
-from django.contrib.auth.backends import ModelBackend
-from django.shortcuts import render, redirect
 
-User = get_user_model()
-
-from django.contrib.auth import get_user_model, login
-from django.contrib.auth.backends import ModelBackend
-from django.shortcuts import render
-from django.http import JsonResponse
-from rest_framework.views import APIView
-import requests
-from django.conf import settings
-
-User = get_user_model()
-
+# ✅ 카카오 로그인 콜백 처리
 class KakaoLoginCallbackView(APIView):
     def get(self, request):
         code = request.GET.get('code')
@@ -183,6 +169,7 @@ class KakaoLoginCallbackView(APIView):
             "sessionid": sessionid  # ✅ 세션 ID 추가
         })
 
+# ✅ 일반 회원가입
 class SignupView(APIView):
     def post(self, request):
         email = request.data.get("email")
@@ -206,6 +193,7 @@ class SignupView(APIView):
         return Response({"message": "회원가입 성공!"}, status=status.HTTP_201_CREATED)
 
 
+# ✅ 일반 로그인
 class LoginView(APIView):
     def get(self, request):
         return Response({"error": "로그인은 POST 요청으로만 가능합니다."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -217,34 +205,29 @@ class LoginView(APIView):
         user = authenticate(request, email=email, password=password)
         if user:
             login(request, user)
-            request.session["user_id"] = user.id  # ✅ 세션에 사용자 ID 저장
-            request.session.save()  # ✅ 세션 저장 추가
+            request.session["user_id"] = user.id
+            request.session.save()
 
-            response = Response(
-                {
-                    "message": "로그인 성공!",
-                    "user_id": user.id,
-                    "nickname": user.nickname,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-            # ✅ 세션 쿠키 강제 설정 (Flutter에서 수동으로 관리 가능하도록)
             session_id = request.session.session_key
+            response = Response({
+                "message": "로그인 성공!",
+                "user_id": user.id,
+                "nickname": user.nickname,
+            }, status=status.HTTP_200_OK)
+
             response.set_cookie(
                 key="sessionid",
                 value=session_id,
                 httponly=True,
-                samesite="None",  # 🚀 외부 도메인에서도 사용 가능
-                secure=False  # 🚀 HTTPS가 아니라도 쿠키 유지 (개발 환경)
+                samesite="None",
+                secure=False
             )
 
             return response
 
         return Response({"error": "이메일 또는 비밀번호가 잘못되었습니다."}, status=status.HTTP_401_UNAUTHORIZED)
 
-
-
+# ✅ 로그아웃
 class LogoutView(APIView):
     authentication_classes = [SessionAuthentication]
     permission_classes = [IsAuthenticated]
