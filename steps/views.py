@@ -5,6 +5,7 @@ from rest_framework import status
 from .models import StepCount
 from .serializers import StepCountSerializer
 from datetime import date
+from django.contrib.auth import get_user
 
 class StepCountView(APIView):
     def get(self, request):
@@ -18,9 +19,11 @@ class StepCountView(APIView):
         print(f"📥 받은 요청 데이터: {request.data}")  # ✅ 요청 데이터 출력
         print(f"📥 요청 유저: {request.user}")  # ✅ 유저 정보 출력
 
+        user = get_user(request)  # ✅ LazyObject를 실제 CustomUser 객체로 변환
+
         serializer = StepCountSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            serializer.save(user=user)  # ✅ 변환된 user 객체 저장
             print(f"✅ 걸음 수 저장 완료: {serializer.data}")  # ✅ 저장 완료 로그
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
