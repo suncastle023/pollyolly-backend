@@ -17,3 +17,12 @@ db.sqlite3
 .vscode/
 .idea/
 .DS_Store
+
+# AWS private key
+polly-olly.pem
+
+# 기타
+cookies.txt
+
+# 마이그레이션 파일
+*/migrations/
