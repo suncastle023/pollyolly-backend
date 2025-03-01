@@ -23,9 +23,12 @@ class FeedPetAPIView(APIView):
     def post(self, request):
         pet = Pet.objects.get(owner=request.user)
         inventory = Inventory.objects.get(user=request.user)
-        if inventory.feed_pet(pet):
-            return Response({"message": "펫에게 밥을 줬어요!"})
-        return Response({"message": "밥을 줄 수 없는 상태입니다."}, status=400)
+        success, message = inventory.feed_pet(pet)  # ✅ 모델에서 반환한 메시지를 그대로 사용
+        if success:
+            return Response({"message": message})
+        return Response({"message": message}, status=400)
+    
+    
 
 class GiveWaterAPIView(APIView):
     permission_classes = [IsAuthenticated]

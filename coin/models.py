@@ -13,36 +13,29 @@ class Coin(models.Model):
 
     def add_coins(self, steps):
         today = timezone.now().date()
-
-        # 새로운 날짜면 보상 초기화
+        # 만약 마지막 보상 지급 날짜가 오늘이 아니라면 보상 기준을 리셋
         if self.last_reward_date != today:
             self.last_rewarded_steps = 0
             self.last_reward_date = today
 
-        # 보상 받을 수 있는 새로운 걸음 수 계산
-        new_steps = steps - self.last_rewarded_steps
-        new_steps = max(new_steps, 0)  # ✅ 음수 방지
+        # 새로 추가된 걸음 수 계산 (음수가 되지 않도록 보정)
+        new_steps = max(steps - self.last_rewarded_steps, 0)
+        reward_count = new_steps // 50
+        coins_to_add = reward_count
 
-        reward_count = new_steps // 50  # 50걸음마다 보상 지급
-        coins_to_add = reward_count  # 코인은 리워드 개수만큼 추가
+        # 만약 reward_count가 0이면 아무 것도 지급하지 않음
+        if reward_count == 0:
+            return {"coins": 0, "feed_bonus": 0, "toy_bonus": 0}
 
-        # ✅ 새롭게 추가될 보너스를 기존 값에 누적
+        # 보너스는 새로 지급되는 횟수만큼 계산
         new_feed_bonus = sum(random.randint(0, 2) for _ in range(reward_count))
         new_toy_bonus = sum(random.randint(0, 3) for _ in range(reward_count))
 
         self.amount += coins_to_add
-        self.total_feed_bonus += new_feed_bonus
-        self.total_toy_bonus += new_toy_bonus
-        self.last_rewarded_steps += reward_count * 50  # ✅ 마지막 보상 기준 업데이트
+        self.last_rewarded_steps += reward_count * 50
         self.save()
 
         print(f"[DEBUG] {self.user.email} | Steps: {steps} (New: {new_steps}) → Reward Count: {reward_count} → Coins Added: {coins_to_add}")
-        print(f"[DEBUG] {self.user.email} | Feed Bonus: {new_feed_bonus} (Total: {self.total_feed_bonus}), Toy Bonus: {new_toy_bonus} (Total: {self.total_toy_bonus})")
+        print(f"[DEBUG] {self.user.email} | New Feed Bonus: {new_feed_bonus}, New Toy Bonus: {new_toy_bonus}")
 
-        return {
-            "coins": coins_to_add,
-            "feed_bonus": new_feed_bonus,
-            "toy_bonus": new_toy_bonus,
-            "total_feed_bonus": self.total_feed_bonus,  
-            "total_toy_bonus": self.total_toy_bonus,    
-        }
+        return {"coins": coins_to_add, "feed_bonus": new_feed_bonus, "toy_bonus": new_toy_bonus}
