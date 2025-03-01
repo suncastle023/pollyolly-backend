@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 
 class Inventory(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    feed = models.IntegerField(default=0)  # 사료 개수
-    toy = models.IntegerField(default=0)  # 장난감 개수
-    water = models.IntegerField(default=0)  # 물 개수
+    feed = models.IntegerField(default=5)  # 사료 개수
+    toy = models.IntegerField(default=5)  # 장난감 개수
+    water = models.IntegerField(default=5)  # 물 개수
     last_fed = models.DateTimeField(null=True, blank=True)  # 마지막 밥 준 시간
     last_water = models.DateTimeField(null=True, blank=True)  # 마지막 물 준 시간
 

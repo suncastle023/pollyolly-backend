@@ -35,7 +35,7 @@ class Pet(models.Model):
     pet_type = models.CharField(max_length=20)
     breed = models.CharField(max_length=20)
     level = models.IntegerField(default=1)
-    experience = models.IntegerField(default=100)  # ✅ 체력(경험치) 역할 수행
+    experience = models.IntegerField(default=50)  # ✅ 체력(경험치) 역할 수행
     last_activity = models.DateTimeField(auto_now_add=True)  # ✅ 마지막 활동 시간 기록
 
     def __str__(self):
