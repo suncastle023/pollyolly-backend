@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-@c@o#s*3bg3o*ue^4cijk@-t(vtac*eb!gm%yg3n$f0(g24%)1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'pollyolly.store', '3.35.214.190']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'pollyolly.store', 'www.pollyolly.store', '3.35.214.190']
 
 
 # Application definition
@@ -161,6 +161,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://pollyolly.store", 
     "http://3.35.214.190",   
+    "http://www.pollyolly.store",
 ]
 
 CSRF_COOKIE_NAME = "csrftoken"
@@ -173,3 +174,10 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False
 SESSION_ENGINE = "django.contrib.sessions.backends.db"  # 기본 DB 세션 엔진
 SESSION_COOKIE_SAMESITE = "Lax" 
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',  # ✅ JSONRenderer 사용
+    ],
+    'DEFAULT_CHARSET': 'utf-8',  # ✅ UTF-8 설정
+}

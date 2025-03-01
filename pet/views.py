@@ -52,3 +52,20 @@ class PetLevelUpView(APIView):
             return Response({"message": f"{pet.name}의 레벨이 {pet.level}이 되었습니다!"}, status=status.HTTP_200_OK)
         except Pet.DoesNotExist:
             return Response({"error": "해당 반려동물을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        
+class MyActivePetAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # 레벨이 10 미만인 펫 중 하나 가져온다고 가정
+        pet = Pet.objects.filter(user=request.user, level__lt=10).first()
+        if not pet:
+            return Response({"message": "현재 키우는 펫이 없습니다."}, status=404)
+
+        data = {
+            "id": pet.id,
+            "name": pet.name,
+            "level": pet.level,
+            "experience": pet.experience,
+        }
+        return Response(data)

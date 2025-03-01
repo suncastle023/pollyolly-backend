@@ -48,3 +48,15 @@ class PlayWithToyAPIView(APIView):
         if pet.play_with_toy(inventory):
             return Response({"message": "펫과 장난감을 사용했어요!"})
         return Response({"message": "장난감이 부족합니다."}, status=400)
+
+class GetInventoryAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        inventory, _ = Inventory.objects.get_or_create(user=request.user)
+        data = {
+            "feed": inventory.feed,
+            "water": inventory.water,
+            "toy": inventory.toy,
+        }
+        return Response(data)
