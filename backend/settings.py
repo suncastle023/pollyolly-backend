@@ -170,4 +170,4 @@ SESSION_COOKIE_NAME = "sessionid"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False
 SESSION_ENGINE = "django.contrib.sessions.backends.db"  # 기본 DB 세션 엔진
-SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SAMESITE = "Lax" 
