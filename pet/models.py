@@ -32,7 +32,9 @@ class Pet(models.Model):
     name = models.CharField(max_length=100)
     pet_type = models.CharField(max_length=20)
     breed = models.CharField(max_length=20)
-    level = models.IntegerField(default=1)  # 반려동물 레벨 (1~10)
+    level = models.IntegerField(default=1)
+    experience = models.IntegerField(default=0)
+    health = models.IntegerField(default=100)
 
     def __str__(self):
         return f"{self.name} ({self.breed}) - Lv.{self.level}"
@@ -54,3 +56,13 @@ class Pet(models.Model):
         chosen_type = random.choice(available_pets)
         chosen_breed = random.choice(cls.PET_TYPES[chosen_type])
         return chosen_type, chosen_breed
+
+    def play_with_toy(self, inventory):
+        if inventory.toy > 0:
+            exp_gain = max(10 - (self.level - 1), 1)
+            self.experience += exp_gain
+            inventory.toy -= 1
+            self.save()
+            inventory.save()
+            return True
+        return False
