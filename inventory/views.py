@@ -21,7 +21,7 @@ class FeedPetAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        pet = Pet.objects.get(user=request.user)
+        pet = Pet.objects.get(owner=request.user)
         inventory = Inventory.objects.get(user=request.user)
         if inventory.feed_pet(pet):
             return Response({"message": "펫에게 밥을 줬어요!"})
@@ -31,7 +31,7 @@ class GiveWaterAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        pet = Pet.objects.get(user=request.user)
+        pet = Pet.objects.get(owner=request.user)
         inventory = Inventory.objects.get(user=request.user)
         success, message = inventory.give_water(pet)
         
@@ -43,7 +43,7 @@ class PlayWithToyAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        pet = Pet.objects.get(user=request.user)
+        pet = Pet.objects.get(owner=request.user)
         inventory = Inventory.objects.get(user=request.user)
         if pet.play_with_toy(inventory):
             return Response({"message": "펫과 장난감을 사용했어요!"})
