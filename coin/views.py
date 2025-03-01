@@ -8,14 +8,15 @@ class StepRewardAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        print(f"[DEBUG] User: {request.user}, Authenticated: {request.user.is_authenticated}")  # 디버깅 추가
+        if not request.user.is_authenticated:
+            return Response({"error": "User is not authenticated"}, status=status.HTTP_403_FORBIDDEN)
+
         steps = request.data.get("steps", 0)
         coin, created = Coin.objects.get_or_create(user=request.user)
         reward = coin.add_coins(steps)
 
-        # 사용자 인벤토리 가져오기 (없으면 생성)
         inventory, _ = Inventory.objects.get_or_create(user=request.user)
-        
-        # 지급된 보상을 인벤토리에 반영
         inventory.feed += reward["feed_bonus"]
         inventory.toy += reward["toy_bonus"]
         inventory.save()
