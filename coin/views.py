@@ -8,13 +8,14 @@ class StepRewardAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        print(f"[DEBUG] User: {request.user}, Authenticated: {request.user.is_authenticated}")  # 디버깅 추가
+        print(f"[DEBUG] User: {request.user}, Authenticated: {request.user.is_authenticated}")
+
         if not request.user.is_authenticated:
             return Response({"error": "User is not authenticated"}, status=status.HTTP_403_FORBIDDEN)
 
-        # 명시적으로 정수 변환
+        # 🚀 steps 값이 음수가 되지 않도록 보정
         try:
-            steps = int(request.data.get("steps", 0))
+            steps = max(0, int(request.data.get("steps", 0)))  # ✅ 최소값 0 보장
         except (ValueError, TypeError):
             steps = 0
 
