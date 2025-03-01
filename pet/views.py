@@ -34,7 +34,10 @@ class PetListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Pet.objects.filter(owner=self.request.user)
+        pets = Pet.objects.filter(owner=self.request.user)
+        for pet in pets:
+            pet.reduce_experience_over_time()  # ✅ 조회 시 자동으로 체력 감소 반영
+        return pets
     
 class PetLevelUpView(APIView):
     permission_classes = [IsAuthenticated]
@@ -45,8 +48,7 @@ class PetLevelUpView(APIView):
             if pet.level >= 10:
                 return Response({"message": "최대 레벨(10)에 도달했습니다."}, status=status.HTTP_400_BAD_REQUEST)
             
-            pet.level += 1
-            pet.save()
+            pet.level_up()
             return Response({"message": f"{pet.name}의 레벨이 {pet.level}이 되었습니다!"}, status=status.HTTP_200_OK)
         except Pet.DoesNotExist:
             return Response({"error": "해당 반려동물을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
