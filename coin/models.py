@@ -15,4 +15,7 @@ class Coin(models.Model):
         feed_bonus = random.randint(0, 2)  # 0~2개 랜덤 지급
         toy_bonus = random.randint(0, 3)  # 0~3개 랜덤 지급
         
+        print(f"[DEBUG] {self.user.username} | Steps: {steps} → Coins Added: {coins_to_add}")
+        print(f"[DEBUG] {self.user.username} | Feed Bonus: {feed_bonus}, Toy Bonus: {toy_bonus}")
+
         return {"coins": coins_to_add, "feed_bonus": feed_bonus, "toy_bonus": toy_bonus}
