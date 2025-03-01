@@ -6,20 +6,28 @@ from rest_framework.permissions import IsAuthenticated
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.response import Response
+from rest_framework import status
 
 User = get_user_model()
+
 
 class GetUserInfoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user  # ✅ 로그인된 사용자 정보
+        user = request.user
+
+        if not user.is_authenticated:
+            return Response(
+                {"message": "로그인이 필요합니다."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
         return Response({
-            "email": user.email,  # ✅ username 대신 email 사용
-            "nickname": user.nickname,  # ✅ 닉네임 추가
-            "level": user.level,  # ✅ 사용자 레벨 추가
-            "phone_number": user.phone_number,  # ✅ 전화번호 추가
+            "email": user.email,
+            "nickname": user.nickname,
+            "level": user.level,
+            "phone_number": user.phone_number,
         })
     
     
