@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from datetime import datetime, timedelta
+from django.utils import timezone
 
 class Inventory(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -21,22 +22,21 @@ class Inventory(models.Model):
         return False
 
     def feed_pet(self, pet):
-        now = datetime.now()
+        now = timezone.now()  # ✅ datetime.now() → timezone.now() 수정
         if self.feed > 0 and (not self.last_fed or now - self.last_fed > timedelta(hours=6)):
-            if pet.experience >= 30:  
+            if pet.experience >= 30:  # ✅ pet.health → pet.experience 수정
                 exp_gain = 20 if pet.experience >= 100 else 10  # 체력이 100 이상이면 경험치 2배
-                pet.experience += exp_gain
-                pet.experience -= 30  
+                pet.experience = min(pet.experience + exp_gain, 100)  # ✅ 최대값 100 제한 추가
+                pet.experience -= 30  # ✅ 경험치 감소
                 self.feed -= 1
-                self.last_fed = now
+                self.last_fed = now  # ✅ 마지막 먹이 준 시간 업데이트
                 self.save()
                 pet.save()
                 return True
         return False
 
-
     def give_water(self, pet):
-        now = datetime.now()
+        now = timezone.now()  # ✅ datetime.now() → timezone.now() 수정
         current_hour = now.hour
         last_given = self.last_water
 
@@ -47,12 +47,12 @@ class Inventory(models.Model):
             elif last_given.hour >= 12 and current_hour >= 12:
                 return False, "오늘 오후에 이미 물을 주었습니다."
 
-        if self.water > 0 and pet.health >= 30:
-            exp_gain = 60 if pet.health >= 100 else 30
-            pet.experience += exp_gain
-            pet.health -= 30
+        if self.water > 0 and pet.experience >= 30:  # ✅ pet.health → pet.experience 수정
+            exp_gain = 60 if pet.experience >= 100 else 30
+            pet.experience = min(pet.experience + exp_gain, 100)  # ✅ 최대 경험치 제한 추가
+            pet.experience -= 30  # ✅ 경험치 감소 추가
             self.water -= 1
-            self.last_water = now
+            self.last_water = now  # ✅ 마지막 물 준 시간 업데이트
             self.save()
             pet.save()
             return True, "펫에게 물을 줬습니다!"
