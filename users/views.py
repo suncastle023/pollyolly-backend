@@ -6,9 +6,27 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import authentication_classes, permission_classes
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
+from rest_framework.response import Response
 
 User = get_user_model()
 
+class UserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # ✅ 사용자의 레벨이 존재하지 않으면 기본값 1을 설정
+        level = getattr(user, "level", 1)
+
+        return Response({
+            "id": user.id,
+            "username": user.username,
+            "nickname": user.nickname if hasattr(user, "nickname") else None,
+            "level": level
+        })
+    
+    
 # ✅ 세션 인증을 활용하여 닉네임 가져오기
 class GetNicknameView(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]  # ✅ 세션 기반 인증 적용
