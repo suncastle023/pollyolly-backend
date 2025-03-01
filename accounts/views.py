@@ -46,28 +46,31 @@ class CheckEmailDuplicateView(APIView):
         return Response({"message": "사용 가능한 이메일입니다!"}, status=status.HTTP_200_OK)
 
 
-class SaveKakaoNicknameView(APIView):
+class SaveKakaoAddinfoView(APIView):
     def post(self, request):
-        email = request.data.get("email")  # ✅ request.POST에서 request.data로 변경 (DRF 방식)
+        email = request.data.get("email")
         nickname = request.data.get("nickname")
+        phone_number = request.data.get("phone_number")  # ✅ 전화번호 추가
 
+        # ✅ 닉네임 중복 확인
         if User.objects.filter(nickname=nickname).exists():
             return Response({"error": "이미 사용 중인 닉네임입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ✅ 이메일로 사용자 찾기
+        # ✅ 사용자 찾기
         user = User.objects.filter(email=email).first()
         if not user:
             return Response({"error": "사용자를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
-        # ✅ 닉네임 저장
+        # ✅ 닉네임 & 전화번호 저장
         user.nickname = nickname
+        user.phone_number = phone_number  # ✅ 전화번호 저장 추가
         user.save()
 
         # ✅ 로그인 처리
         user.backend = 'django.contrib.auth.backends.ModelBackend'
         login(request, user)
 
-        # ✅ 세션 저장 강제
+        # ✅ 세션 저장
         request.session["user_id"] = user.id
         request.session.save()
 
@@ -79,6 +82,7 @@ class SaveKakaoNicknameView(APIView):
             "message": "로그인 성공!",
             "email": email,
             "nickname": user.nickname,
+            "phone_number": user.phone_number,  # ✅ 전화번호 포함
             "sessionid": sessionid,  # ✅ 세션 ID 포함
         }, status=status.HTTP_200_OK)
 
@@ -168,6 +172,8 @@ class KakaoLoginCallbackView(APIView):
             "nickname": user.nickname,
             "sessionid": sessionid  # ✅ 세션 ID 추가
         })
+    
+    
 
 # ✅ 일반 회원가입
 class SignupView(APIView):

@@ -3,27 +3,23 @@ from django.contrib.auth import get_user_model
 from rest_framework.views import APIView
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import authentication_classes, permission_classes
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.response import Response
 
 User = get_user_model()
 
-class UserInfoView(APIView):
+class GetUserInfoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-
-        # ✅ 사용자의 레벨이 존재하지 않으면 기본값 1을 설정
-        level = getattr(user, "level", 1)
+        user = request.user  # ✅ 로그인된 사용자 정보
 
         return Response({
-            "id": user.id,
-            "username": user.username,
-            "nickname": user.nickname if hasattr(user, "nickname") else None,
-            "level": level
+            "email": user.email,  # ✅ username 대신 email 사용
+            "nickname": user.nickname,  # ✅ 닉네임 추가
+            "level": user.level,  # ✅ 사용자 레벨 추가
+            "phone_number": user.phone_number,  # ✅ 전화번호 추가
         })
     
     
