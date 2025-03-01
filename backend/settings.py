@@ -138,6 +138,7 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -170,4 +171,4 @@ SESSION_COOKIE_NAME = "sessionid"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False
 SESSION_ENGINE = "django.contrib.sessions.backends.db"  # 기본 DB 세션 엔진
-SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SAMESITE = "Lax" 
