@@ -35,8 +35,8 @@ class Pet(models.Model):
     pet_type = models.CharField(max_length=20)
     breed = models.CharField(max_length=20)
     level = models.IntegerField(default=1)
-    experience = models.IntegerField(default=50)  # ✅ 체력(경험치) 역할 수행
-    last_activity = models.DateTimeField(auto_now_add=True)  # ✅ 마지막 활동 시간 기록
+    experience = models.IntegerField(default=50)  # ✅ 경험치 (체력 역할 수행)
+    last_activity = models.DateTimeField(default=timezone.now)  # ✅ 기본값을 timezone.now로 변경 (timezone-aware)
 
     def __str__(self):
         return f"{self.name} ({self.breed}) - Lv.{self.level}"
@@ -60,10 +60,10 @@ class Pet(models.Model):
         return chosen_type, chosen_breed
 
     def feed_pet(self, inventory):
-        """ ✅ 사료나 물을 사용하여 체력(경험치) 회복 """
-        if inventory.food > 0:
-            self.experience = min(self.experience + 10, 100)  # 최대 체력(100) 초과 불가
-            inventory.food -= 1
+        """ ✅ 사료 사용하여 체력(경험치) 회복 """
+        if inventory.feed > 0:  # ✅ food → feed로 수정
+            self.experience = min(self.experience + 10, 100)  # 최대 경험치(100) 초과 불가
+            inventory.feed -= 1  # ✅ food → feed로 수정
             inventory.save()
             self.save()
             return True
@@ -98,11 +98,13 @@ class Pet(models.Model):
             self.save()
 
     def reduce_experience_over_time(self):
-        """ ✅ 1시간마다 체력(경험치) 0.5 감소 """
+        """ ✅ 1시간마다 경험치 0.5 감소 """
         now = timezone.now()
+        if self.last_activity is None:
+            self.last_activity = now  # 처음 활동 시간이 없으면 현재 시간으로 설정
         hours_passed = (now - self.last_activity).total_seconds() // 3600  # 경과 시간(시간 단위)
 
         if hours_passed >= 1:
             self.experience = max(self.experience - (0.5 * hours_passed), 0)
-            self.last_activity = now
+            self.last_activity = now  # ✅ 업데이트 시간 저장
             self.save()
