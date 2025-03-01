@@ -15,16 +15,12 @@ class StepCountView(APIView):
         return Response({"date": today, "steps": step.steps if step else 0})
 
     def post(self, request):
-        """ 걸음 수 저장 """
-        print(f"📥 받은 요청 데이터: {request.data}")  # ✅ 요청 데이터 출력
-        print(f"📥 요청 유저: {request.user}")  # ✅ 유저 정보 출력
-
         user = get_user(request)  # ✅ LazyObject를 실제 CustomUser 객체로 변환
 
         serializer = StepCountSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=user)  # ✅ 변환된 user 객체 저장
-            print(f"✅ 걸음 수 저장 완료: {serializer.data}")  # ✅ 저장 완료 로그
+            #print(f"✅ 걸음 수 저장 완료: {serializer.data}")  # ✅ 저장 완료 로그
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         print(f"❌ 유효하지 않은 데이터: {serializer.errors}")  # ✅ 유효성 검사 실패 로그

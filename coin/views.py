@@ -12,7 +12,12 @@ class StepRewardAPIView(APIView):
         if not request.user.is_authenticated:
             return Response({"error": "User is not authenticated"}, status=status.HTTP_403_FORBIDDEN)
 
-        steps = request.data.get("steps", 0)
+        # 명시적으로 정수 변환
+        try:
+            steps = int(request.data.get("steps", 0))
+        except (ValueError, TypeError):
+            steps = 0
+
         coin, created = Coin.objects.get_or_create(user=request.user)
         reward = coin.add_coins(steps)
 
