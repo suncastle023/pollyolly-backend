@@ -1,38 +1,44 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 import random
 
 class Coin(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     amount = models.IntegerField(default=0)
-    last_rewarded_steps = models.IntegerField(default=0)  # 마지막 보상 지급 시점의 누적 걸음 수
+    last_rewarded_steps = models.IntegerField(default=0)
+    last_reward_date = models.DateField(null=True, blank=True)
+    total_feed_bonus = models.IntegerField(default=0)  # ✅ 기존 feed 보너스 저장
+    total_toy_bonus = models.IntegerField(default=0)  # ✅ 기존 toy 보너스 저장
 
     def add_coins(self, steps):
-        # 만약 마지막 보상 기준을 저장하는 필드가 없다면 추가하는 것이 좋습니다.
-        # 예를 들어, self.last_rewarded_steps를 생성하고, 처음에는 0으로 초기화했다고 가정합니다.
-        # 만약 없다면 아래 코드는 단순히 steps // 50을 사용하게 됩니다.
-        # reward_count: 마지막 보상 이후 추가된 50걸음의 횟수
-        new_steps = steps - getattr(self, 'last_rewarded_steps', 0)
-        reward_count = new_steps // 50
-        
-        coins_to_add = reward_count  # 50걸음마다 1코인 지급
+        today = timezone.now().date()
+        if self.last_reward_date != today:
+            self.last_rewarded_steps = 0
+            self.last_reward_date = today
 
-        # 보상이 지급되었다면, bonus도 reward_count 횟수만큼 지급
-        feed_bonus = 0
-        toy_bonus = 0
-        if reward_count > 0:
-            feed_bonus = sum(random.randint(0, 2) for _ in range(reward_count))
-            toy_bonus = sum(random.randint(0, 3) for _ in range(reward_count))
-            # 보상 지급 후, 마지막 보상 기준 갱신 (예: 기존 값에 지급된 50걸음만큼 추가)
-            if hasattr(self, 'last_rewarded_steps'):
-                self.last_rewarded_steps += reward_count * 50
-            else:
-                self.last_rewarded_steps = reward_count * 50
+        new_steps = steps - self.last_rewarded_steps
+        new_steps = max(new_steps, 0)  # ✅ 음수 값 방지
+        reward_count = new_steps // 50
+        coins_to_add = reward_count
+
+        # ✅ 새로 추가될 보너스를 기존 값에 누적 (새로 지급될 보너스만 추가)
+        new_feed_bonus = sum(random.randint(0, 2) for _ in range(reward_count))
+        new_toy_bonus = sum(random.randint(0, 3) for _ in range(reward_count))
 
         self.amount += coins_to_add
+        self.total_feed_bonus += new_feed_bonus
+        self.total_toy_bonus += new_toy_bonus
+        self.last_rewarded_steps += reward_count * 50  # ✅ 마지막 보상 기준 걸음 업데이트
         self.save()
 
         print(f"[DEBUG] {self.user.email} | Steps: {steps} (New: {new_steps}) → Reward Count: {reward_count} → Coins Added: {coins_to_add}")
-        print(f"[DEBUG] {self.user.email} | Feed Bonus: {feed_bonus}, Toy Bonus: {toy_bonus}")
+        print(f"[DEBUG] {self.user.email} | Feed Bonus: {new_feed_bonus} (Total: {self.total_feed_bonus}), Toy Bonus: {new_toy_bonus} (Total: {self.total_toy_bonus})")
 
-        return {"coins": coins_to_add, "feed_bonus": feed_bonus, "toy_bonus": toy_bonus}
+        return {
+            "coins": coins_to_add,
+            "feed_bonus": new_feed_bonus,
+            "toy_bonus": new_toy_bonus,
+            "total_feed_bonus": self.total_feed_bonus,  # ✅ 누적된 보너스 값을 반환
+            "total_toy_bonus": self.total_toy_bonus,    # ✅ 누적된 보너스 값을 반환
+        }
