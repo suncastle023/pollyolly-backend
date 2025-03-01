@@ -26,3 +26,5 @@ cookies.txt
 
 # 마이그레이션 파일
 */migrations/
+
+nohup.out

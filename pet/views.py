@@ -11,7 +11,11 @@ class PetCreateView(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        level = user.profile.level  # 사용자의 레벨
+
+        if not hasattr(user, "level"):
+            return Response({"error": "사용자의 레벨 정보가 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        level = user.level 
 
         # 사용자가 선택할 수 있는 펫 리스트 가져오기
         pet_type, breed = Pet.get_random_pet(level)

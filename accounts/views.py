@@ -209,11 +209,11 @@ class LoginView(APIView):
             request.session.save()
 
             session_id = request.session.session_key
-            response = Response({
+            response = JsonResponse({
                 "message": "로그인 성공!",
                 "user_id": user.id,
                 "nickname": user.nickname,
-            }, status=status.HTTP_200_OK)
+            }, json_dumps_params={"ensure_ascii": False}, status=status.HTTP_200_OK)
 
             response.set_cookie(
                 key="sessionid",
@@ -225,8 +225,13 @@ class LoginView(APIView):
 
             return response
 
-        return Response({"error": "이메일 또는 비밀번호가 잘못되었습니다."}, status=status.HTTP_401_UNAUTHORIZED)
-
+        return JsonResponse(
+            {"error": "이메일 또는 비밀번호가 잘못되었습니다."},
+            json_dumps_params={"ensure_ascii": False}, 
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    
 # ✅ 로그아웃
 class LogoutView(APIView):
     authentication_classes = [SessionAuthentication]
