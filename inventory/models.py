@@ -23,16 +23,17 @@ class Inventory(models.Model):
     def feed_pet(self, pet):
         now = datetime.now()
         if self.feed > 0 and (not self.last_fed or now - self.last_fed > timedelta(hours=6)):
-            if pet.health >= 30:
-                exp_gain = 20 if pet.health >= 100 else 10  # 체력이 100 이상이면 경험치 2배
+            if pet.experience >= 30:  
+                exp_gain = 20 if pet.experience >= 100 else 10  # 체력이 100 이상이면 경험치 2배
                 pet.experience += exp_gain
-                pet.health -= 30
+                pet.experience -= 30  
                 self.feed -= 1
                 self.last_fed = now
                 self.save()
                 pet.save()
                 return True
         return False
+
 
     def give_water(self, pet):
         now = datetime.now()
