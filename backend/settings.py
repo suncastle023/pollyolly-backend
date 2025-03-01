@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'users',
     'pet',
     'steps'
+    'coin',
+    'inventory',
 
 ]
 
