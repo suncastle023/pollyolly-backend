@@ -14,5 +14,3 @@ class CoinAdmin(admin.ModelAdmin):
             return []  # 슈퍼유저는 모든 필드를 수정 가능
         return self.readonly_fields
     
-
-admin.site.register(Coin, CoinAdmin)
