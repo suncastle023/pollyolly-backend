@@ -23,12 +23,11 @@ class FeedPetAPIView(APIView):
     def post(self, request):
         pet = Pet.objects.get(owner=request.user)
         inventory = Inventory.objects.get(user=request.user)
-        success, message = inventory.feed_pet(pet)  # ✅ 모델에서 반환한 메시지를 그대로 사용
+        success, message = inventory.feed_pet(pet)  # 튜플 언패킹
         if success:
             return Response({"message": message})
         return Response({"message": message}, status=400)
-    
-    
+ 
 
 class GiveWaterAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -36,11 +35,11 @@ class GiveWaterAPIView(APIView):
     def post(self, request):
         pet = Pet.objects.get(owner=request.user)
         inventory = Inventory.objects.get(user=request.user)
-        success, message = inventory.give_water(pet)
-        
+        success, message = inventory.give_water(pet)  # 튜플 언패킹
         if success:
             return Response({"message": message})
         return Response({"message": message}, status=400)
+
 
 class PlayWithToyAPIView(APIView):
     permission_classes = [IsAuthenticated]
