@@ -56,13 +56,18 @@ class Inventory(models.Model):
         current_hour = now.hour
         last_given = self.last_water
 
-        # 오전/오후 한정: 동일 구간에 이미 물을 준 경우
         if last_given:
-            if last_given.hour < 12 and current_hour < 12:
-                return False, "오늘 오전에 이미 물을 주었습니다."
-            elif last_given.hour >= 12 and current_hour >= 12:
-                return False, "오늘 오후에 이미 물을 주었습니다."
-
+            # ✅ 날짜가 다르면 리셋
+            if last_given.date() == now.date():
+                # ✅ 같은 날짜일 때만 오전/오후 제한 적용
+                # 오전/오후 한정: 동일 구간에 이미 물을 준 경우
+                if last_given:
+                    if last_given.hour < 12 and current_hour < 12:
+                        return False, "오늘 오전에 이미 물을 주었습니다."
+                    elif last_given.hour >= 12 and current_hour >= 12:
+                        return False, "오늘 오후에 이미 물을 주었습니다."
+     
+     
         if self.water <= 0:
             return False, "물이 부족합니다."
 
