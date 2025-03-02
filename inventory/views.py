@@ -25,10 +25,10 @@ class FeedPetAPIView(APIView):
         inventory = Inventory.objects.get(user=request.user)
         success, message = inventory.feed_pet(pet)  # 튜플 언패킹
         if success:
-            return Response({"message": message})
-        return Response({"message": message}, status=400)
- 
+            return Response({"success": True, "message": message})  # ✅ success 추가
+        return Response({"success": False, "message": message}, status=400)  # ✅ 실패 응답에도 추가
 
+ 
 class GiveWaterAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -37,8 +37,9 @@ class GiveWaterAPIView(APIView):
         inventory = Inventory.objects.get(user=request.user)
         success, message = inventory.give_water(pet)  # 튜플 언패킹
         if success:
-            return Response({"message": message})
-        return Response({"message": message}, status=400)
+            return Response({"success": True, "message": message})  # ✅ success 추가
+        return Response({"success": False, "message": message}, status=400)  # ✅ 실패 응답에도 추가
+
 
 
 class PlayWithToyAPIView(APIView):
@@ -48,8 +49,9 @@ class PlayWithToyAPIView(APIView):
         pet = Pet.objects.get(owner=request.user)
         inventory = Inventory.objects.get(user=request.user)
         if pet.play_with_toy(inventory):
-            return Response({"message": "펫과 장난감을 사용했어요!"})
-        return Response({"message": "장난감이 부족합니다."}, status=400)
+            return Response({"success": True, "message": "펫과 장난감을 사용했어요!"})  # ✅ success 추가
+        return Response({"success": False, "message": "장난감이 부족합니다."}, status=400)  # ✅ 실패 응답에도 추가
+
 
 class GetInventoryAPIView(APIView):
     permission_classes = [IsAuthenticated]
