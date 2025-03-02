@@ -124,13 +124,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'ko-kr'  # ✅ 한국어 설정
+TIME_ZONE = 'Asia/Seoul'  # ✅ 한국 시간(KST)으로 변경
 
 USE_I18N = True
+USE_TZ = False  # ✅ 타임존 사용 비활성화 (데이터베이스에 저장될 시간을 한국 시간으로 직접 저장)
 
-USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
