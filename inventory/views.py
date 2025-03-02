@@ -35,10 +35,19 @@ class GiveWaterAPIView(APIView):
     def post(self, request):
         pet = Pet.objects.get(owner=request.user)
         inventory = Inventory.objects.get(user=request.user)
-        success, message = inventory.give_water(pet)  # 튜플 언패킹
+        
+        success, message = inventory.give_water(pet)  # ✅ 튜플 언패킹
+
+        # ✅ 디버깅 추가
+        print(f"🔍 [DEBUG] Before Saving: last_water={inventory.last_water}")
+
+        inventory.save()  # ✅ 저장 확실히 하기
+
+        print(f"✅ [DEBUG] After Saving: last_water={inventory.last_water}")
+
         if success:
-            return Response({"success": True, "message": message})  # ✅ success 추가
-        return Response({"success": False, "message": message}, status=400)  # ✅ 실패 응답에도 추가
+            return Response({"success": True, "message": message, "last_water": inventory.last_water})
+        return Response({"success": False, "message": message, "last_water": inventory.last_water}, status=400)
 
 
 
