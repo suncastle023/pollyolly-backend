@@ -3,7 +3,6 @@ from .models import StepCount
 
 @admin.register(StepCount)
 class StepCountAdmin(admin.ModelAdmin):
-    list_display = ('owner', 'steps', 'date')  # ✅ Admin 패널에서 보이는 필드
-    search_fields = ('email',)  # ✅ 이메일로 검색 가능
+    list_display = ('user', 'steps', 'date')  # ✅ 'owner' 대신 'user' 사용
+    search_fields = ('user__email',)  # ✅ 'email' 대신 'user__email'로 수정
     list_filter = ('date',)  # ✅ 날짜별 필터링 가능
-
