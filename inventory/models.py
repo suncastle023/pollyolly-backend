@@ -63,13 +63,11 @@ class Inventory(models.Model):
                 elif last_given.hour >= 12 and current_hour >= 12:
                     return False, "오늘 오후에 이미 물을 주었습니다."
 
-        if pet.health < 30:
-            return False, "펫의 체력이 너무 낮아 물을 줄 수 없습니다."
         if self.water <= 0:
             return False, "물이 부족합니다."
 
         # 체력 회복 (100 이상 증가하지 않음)
-        pet.health = min(pet.health + 30, 100)
+        pet.health = min(pet.health + 30, 300)
 
         self.water -= 1
         self.last_water = now

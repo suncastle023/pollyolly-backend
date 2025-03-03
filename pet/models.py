@@ -138,13 +138,15 @@ class Pet(models.Model):
 
 
     def reduce_experience_over_time(self):
-        """ ✅ 1시간마다 체력 1 감소 """
         now = timezone.now()
+
+        # last_activity가 None이면 현재 시간으로 초기화
         if self.last_activity is None:
             self.last_activity = now
-        hours_passed = (now - self.last_activity).total_seconds() // 3600  # 경과 시간(시간 단위)
 
-        if hours_passed >= 1:
-            self.health = max(self.health - int(hours_passed), 0)  # ✅ 시간당 체력 1 감소
-            self.last_activity = now
-            self.save()
+        # last_activity가 now보다 작으면, 1시간씩 증가시키면서 체력을 깎는다.
+        while self.last_activity + timedelta(hours=1) <= now:
+            self.health = max(self.health - 1, 0)  # 시간당 체력 1 감소
+            self.last_activity += timedelta(hours=1)
+
+        self.save()
