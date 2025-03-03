@@ -56,9 +56,16 @@ class PlayWithToyAPIView(APIView):
     def post(self, request):
         pet = Pet.objects.get(owner=request.user)
         inventory = Inventory.objects.get(user=request.user)
+
         if pet.play_with_toy(inventory):
-            return Response({"success": True, "message": "펫과 장난감을 사용했어요!"})  # ✅ success 추가
-        return Response({"success": False, "message": "장난감이 부족합니다."}, status=400)  # ✅ 실패 응답에도 추가
+            return Response({
+                "success": True, 
+                "message": "펫과 장난감을 사용했어요!",
+                "experience": pet.experience,  # ✅ 경험치 포함
+                "toy": inventory.toy,  # ✅ 남은 장난감 개수 포함
+            })  
+        
+        return Response({"success": False, "message": "장난감이 부족합니다."}, status=400)
 
 
 class GetInventoryAPIView(APIView):
