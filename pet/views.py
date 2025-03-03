@@ -73,6 +73,8 @@ class MyActivePetAPIView(APIView):
         data = {
             "id": pet.id,
             "name": pet.name,
+            "breed": pet.breed,  
+            "pet_type": pet.pet_type,  
             "level": pet.level,
             "experience": pet.experience,
         }
