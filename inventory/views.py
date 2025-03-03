@@ -25,9 +25,8 @@ class FeedPetAPIView(APIView):
         inventory = Inventory.objects.get(user=request.user)
         success, message = inventory.feed_pet(pet)  # 튜플 언패킹
         if success:
-            return Response({"success": True, "message": message})  # ✅ success 추가
-        return Response({"success": False, "message": message}, status=400)  # ✅ 실패 응답에도 추가
-
+            return Response({"success": True, "message": message, "health": pet.health})
+        return Response({"success": False, "message": message, "health": pet.health}, status=400)
  
 class GiveWaterAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -46,8 +45,8 @@ class GiveWaterAPIView(APIView):
         print(f"✅ [DEBUG] After Saving: last_water={inventory.last_water}")
 
         if success:
-            return Response({"success": True, "message": message, "last_water": inventory.last_water})
-        return Response({"success": False, "message": message, "last_water": inventory.last_water}, status=400)
+            return Response({"success": True, "message": message, "health": pet.health, "last_water": inventory.last_water})
+        return Response({"success": False, "message": message, "health": pet.health, "last_water": inventory.last_water}, status=400)
 
 
 

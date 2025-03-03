@@ -23,21 +23,20 @@ class Inventory(models.Model):
 
     def feed_pet(self, pet):
         """
-        사료를 주면 pet의 경험치(체력)를 회복시킵니다.
-        - 사료 한 개당 +10 exp, 단, pet.experience가 100 이상이면 2배 (+20)
-        - 사료는 언제든지 줄 수 있습니다.
-        - 단, 펫의 경험치가 30 미만이면 사료를 줄 수 없습니다.
+        ✅ 사료를 주면 펫의 체력이 회복됩니다.
+        - 사료 1개당 체력 +10 (최대 100까지)
+        - 체력이 100이면 추가 회복 없음
+        - 체력이 30 이상이어야 사료를 줄 수 있음
         """
         now = timezone.now()
 
-        if pet.experience < 30:
+        if pet.health < 30:
             return False, "펫의 체력이 너무 낮아 사료를 먹을 수 없습니다."
         if self.feed <= 0:
             return False, "사료가 부족합니다."
 
-        # 경험치 회복량 결정
-        exp_gain = 20 if pet.experience >= 100 else 10
-        pet.experience = min(pet.experience + exp_gain, 100)
+        # 체력 회복 (100 이상 증가하지 않음)
+        pet.health = min(pet.health + 10, 100)
 
         self.feed -= 1
         self.last_fed = now
@@ -47,32 +46,30 @@ class Inventory(models.Model):
 
     def give_water(self, pet):
         """
-        물을 주면 pet의 경험치(체력)를 회복시킵니다.
-        - 물 한 개당 +30 exp, 단, pet.experience가 100 이상이면 2배 (+60)
-        - 물은 오전(00:00~11:59)와 오후(12:00~23:59) 각각 한 번만 줄 수 있습니다.
-        - 단, 펫의 경험치가 30 미만이면 물을 줄 수 없습니다.
+        ✅ 물을 주면 펫의 체력이 회복됩니다.
+        - 물 1개당 체력 +30 (최대 100까지)
+        - 체력이 100이면 추가 회복 없음
+        - 물은 오전(00:00~11:59)와 오후(12:00~23:59) 각각 한 번만 줄 수 있음
+        - 체력이 30 이상이어야 물을 줄 수 있음
         """
         now = timezone.now()
         current_hour = now.hour
         last_given = self.last_water
 
         if last_given:
-            # ✅ 날짜가 다르면 리셋
             if last_given.date() == now.date():
-                # ✅ 같은 날짜일 때만 오전/오후 제한 적용
-                # 오전/오후 한정: 동일 구간에 이미 물을 준 경우
-                if last_given:
-                    if last_given.hour < 12 and current_hour < 12:
-                        return False, "오늘 오전에 이미 물을 주었습니다."
-                    elif last_given.hour >= 12 and current_hour >= 12:
-                        return False, "오늘 오후에 이미 물을 주었습니다."
-     
-     
+                if last_given.hour < 12 and current_hour < 12:
+                    return False, "오늘 오전에 이미 물을 주었습니다."
+                elif last_given.hour >= 12 and current_hour >= 12:
+                    return False, "오늘 오후에 이미 물을 주었습니다."
+
+        if pet.health < 30:
+            return False, "펫의 체력이 너무 낮아 물을 줄 수 없습니다."
         if self.water <= 0:
             return False, "물이 부족합니다."
 
-        exp_gain = 60 if pet.experience >= 100 else 30
-        pet.experience = min(pet.experience + exp_gain, 100)
+        # 체력 회복 (100 이상 증가하지 않음)
+        pet.health = min(pet.health + 30, 100)
 
         self.water -= 1
         self.last_water = now

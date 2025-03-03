@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 import random
-tmp=0
+
 class Coin(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     amount = models.IntegerField(default=0)  # 게임 내 가상 코인
