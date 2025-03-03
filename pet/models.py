@@ -57,7 +57,7 @@ class Pet(models.Model):
     breed = models.CharField(max_length=20)
     level = models.IntegerField(default=1)
     experience = models.IntegerField(default=0) 
-    health = models.IntegerField(default=0)
+    health = models.IntegerField(default=50)
     last_activity = models.DateTimeField(default=timezone.now) 
     image_path = models.CharField(max_length=255, blank=True, null=True)
 

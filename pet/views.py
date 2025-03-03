@@ -77,6 +77,7 @@ class MyActivePetAPIView(APIView):
             "pet_type": pet.pet_type,  
             "level": pet.level,
             "experience": pet.experience,
+            'health':pet.health,
         }
         return Response(data)
 
