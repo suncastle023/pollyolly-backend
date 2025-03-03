@@ -61,19 +61,28 @@ class Pet(models.Model):
 
     def feed_pet(self, inventory):
         """ ✅ 사료 사용하여 체력(경험치) 회복 """
-        if inventory.feed > 0:  # ✅ food → feed로 수정
-            self.experience = min(self.experience + 10, 100)  # 최대 경험치(100) 초과 불가
-            inventory.feed -= 1  # ✅ food → feed로 수정
+        if inventory.feed > 0:
+            self.experience = min(self.experience + 10, 100)  
+            inventory.feed -= 1
             inventory.save()
             self.save()
+
+            if self.experience >= 100:  # ✅ 경험치 100 이상이면 레벨업 호출
+                self.level_up()
+
             return True
         if inventory.water > 0:
             self.experience = min(self.experience + 5, 100)
             inventory.water -= 1
             inventory.save()
             self.save()
+
+            if self.experience >= 100:  # ✅ 경험치 100 이상이면 레벨업 호출
+                self.level_up()
+
             return True
         return False
+
 
     def play_with_toy(self, inventory):
         """ ✅ 장난감 사용 시 체력 감소 및 경험치 증가 """
@@ -91,11 +100,12 @@ class Pet(models.Model):
         return False
 
     def level_up(self):
-        """ ✅ 체력이 100일 때 레벨업 처리 """
-        if self.level < 10:
+        """ ✅ 경험치가 100 이상이면 레벨업 처리 """
+        if self.experience >= 100 and self.level < 10:  # ✅ 경험치 100 이상 확인
             self.level += 1
             self.experience = 50  # 레벨업 후 체력 절반 유지
             self.save()
+
 
     def reduce_experience_over_time(self):
         """ ✅ 1시간마다 경험치 0.5 감소 """
