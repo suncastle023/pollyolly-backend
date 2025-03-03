@@ -7,7 +7,7 @@ from django.utils import timezone
 class Pet(models.Model):
     PET_TYPES = {
         "강아지": ["시바견", "리트리버", "푸들","베니"],
-        "고양이": ["러시안 블루", "샴", "먼치킨"],
+        "고양이": ["러시안블루", "샴", "먼치킨"],
         "토끼": ["핑크토끼"],
         "햄스터": ["햄스터"],
         "거북이": ["거북이"],
@@ -34,7 +34,7 @@ class Pet(models.Model):
         "시바견": "assets/pet_images/shiba_inu.png",
         "리트리버": "assets/pet_images/retriever.png",
         "푸들": "assets/pet_images/poodle.png",
-        "러시안 블루": "assets/pet_images/russian_blue.png",
+        "러시안블루": "assets/pet_images/russian_blue.png",
         "샴": "assets/pet_images/siamese.png",
         "먼치킨": "assets/pet_images/munchkin.png",
         "핑크토끼": "assets/pet_images/rabbit.png",
