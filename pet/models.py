@@ -6,37 +6,65 @@ from django.utils import timezone
 
 class Pet(models.Model):
     PET_TYPES = {
-        "강아지": ["시바견", "리트리버", "푸들"],
+        "강아지": ["시바견", "리트리버", "푸들","베니"],
         "고양이": ["러시안 블루", "샴", "먼치킨"],
-        "토끼": ["토끼"],
+        "토끼": ["핑크토끼"],
         "햄스터": ["햄스터"],
         "거북이": ["거북이"],
-        "앵무새": ["앵무새"],
-        "물고기": ["금붕어", "베타피쉬"],
-        "미니 요괴": ["꼬리가 여러 개인 여우"],
+        "새": ["앵무새"],
+        "물고기": ["금붕어", "열대어"],
+        "요괴": ["구미호","해치","불사조"],
         "그리폰": ["그리폰"],
         "유니콘": ["유니콘"],
-        "드래곤": ["아기 드래곤", "미니 드래곤"],
-        "불사조": ["피닉스"],
+        "드래곤": ["드래곤"],
     }
 
     LEVEL_UNLOCKS = [
         (1, ["강아지", "고양이"]),
         (4, ["햄스터", "물고기"]),
-        (11, ["앵무새", "거북이"]),
-        (20, ["미니 요괴"]),
-        (26, ["그리폰"]),
+        (11, ["새", "거북이"]),
+        (20, ["그리폰"]),
+        (26, ["요괴"]),
         (31, ["유니콘"]),
         (41, ["드래곤"]),
     ]
+
+    IMAGE_PATHS = {
+        "베니": "assets/pet_images/benny_sad.png",
+        "시바견": "assets/pet_images/shiba_inu.png",
+        "리트리버": "assets/pet_images/retriever.png",
+        "푸들": "assets/pet_images/poodle.png",
+        "러시안 블루": "assets/pet_images/russian_blue.png",
+        "샴": "assets/pet_images/siamese.png",
+        "먼치킨": "assets/pet_images/munchkin.png",
+        "핑크토끼": "assets/pet_images/rabbit.png",
+        "햄스터": "assets/pet_images/hamster.png",
+        "거북이": "assets/pet_images/turtle.png",
+        "앵무새": "assets/pet_images/parrot.png",
+        "금붕어": "assets/pet_images/gold_fish.png",
+        "열대어": "assets/pet_images/tropical_fish.png",
+        "구미호": "assets/pet_images/ninetail.png",
+        "해치": "assets/pet_images/hatch.png",
+        "불사조": "assets/pet_images/phoenix.png",
+        "그리폰": "assets/pet_images/griffon.png",
+        "유니콘": "assets/pet_images/unicorn.png",
+        "드래곤": "assets/pet_images/dragon.png",
+    }
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     pet_type = models.CharField(max_length=20)
     breed = models.CharField(max_length=20)
     level = models.IntegerField(default=1)
-    experience = models.IntegerField(default=50)  # ✅ 경험치 (체력 역할 수행)
-    last_activity = models.DateTimeField(default=timezone.now)  # ✅ 기본값을 timezone.now로 변경 (timezone-aware)
+    experience = models.IntegerField(default=50) 
+    last_activity = models.DateTimeField(default=timezone.now) 
+    image_path = models.CharField(max_length=255, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        """자동으로 이미지 경로 설정"""
+        if self.breed in self.IMAGE_PATHS:
+            self.image_path = self.IMAGE_PATHS[self.breed]
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.breed}) - Lv.{self.level}"
