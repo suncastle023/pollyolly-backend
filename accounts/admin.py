@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser
+from django.contrib.sessions.models import Session
+from django.utils.timezone import now
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
@@ -22,3 +24,24 @@ class CustomUserAdmin(UserAdmin):
     )
 
 admin.site.register(CustomUser, CustomUserAdmin)
+
+
+
+class SessionAdmin(admin.ModelAdmin):
+    list_display = ("session_key", "user", "expire_date")
+    ordering = ("-expire_date",)
+
+    def user(self, obj):
+        """세션에서 사용자 ID를 추출하여 CustomUser 모델에서 조회"""
+        data = obj.get_decoded()
+        user_id = data.get("_auth_user_id")
+        if user_id:
+            return CustomUser.objects.filter(id=user_id).first()
+        return None
+
+    def get_queryset(self, request):
+        """만료되지 않은 세션만 표시"""
+        qs = super().get_queryset(request)
+        return qs.filter(expire_date__gte=now())
+
+admin.site.register(Session, SessionAdmin)
