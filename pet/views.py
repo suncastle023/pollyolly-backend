@@ -1,3 +1,4 @@
+import random
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -16,16 +17,19 @@ class PetCreateView(generics.CreateAPIView):
             return Response({"error": "사용자의 레벨 정보가 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         level = user.level 
+        pet_name = request.data.get("name", "새로운 펫")
+        pet_type = request.data.get("pet_type")  # ✅ 사용자가 선택한 pet_type
 
-        # 사용자가 선택할 수 있는 펫 리스트 가져오기
-        pet_type, breed = Pet.get_random_pet(level)
+        if not pet_type or pet_type not in Pet.PET_TYPES:
+            return Response({"error": "유효하지 않은 펫 유형입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not pet_type or not breed:
-            return Response({"error": "선택 가능한 펫이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+        # ✅ 사용자가 선택한 pet_type의 breed 중 랜덤 선택
+        breed = random.choice(Pet.PET_TYPES[pet_type])
 
-        # 펫 생성
-        pet = Pet.objects.create(owner=user, name=request.data.get("name", "새로운 펫"), pet_type=pet_type, breed=breed)
+        # ✅ 선택한 pet_type과 breed를 사용하여 펫 생성
+        pet = Pet.objects.create(owner=user, name=pet_name, pet_type=pet_type, breed=breed)
         serializer = PetSerializer(pet)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

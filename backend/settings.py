@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     'steps',
     'coin',
     'inventory',
+    'store',
+    'friend'
 
 ]
 

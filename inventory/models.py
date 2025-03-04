@@ -13,13 +13,20 @@ class Inventory(models.Model):
 
     def buy_item(self, item_type, coin):
         prices = {"feed": 3, "toy": 1, "water": 2}
-        if coin.amount >= prices[item_type]:
-            setattr(self, item_type, getattr(self, item_type) + 1)
-            coin.amount -= prices[item_type]
-            self.save()
-            coin.save()
-            return True
-        return False
+        
+        if item_type not in prices:
+            return False, "잘못된 아이템입니다."
+
+        if coin.amount < prices[item_type]:
+            return False, "코인이 부족합니다."
+
+        setattr(self, item_type, getattr(self, item_type) + 1)  # 아이템 증가
+        coin.amount -= prices[item_type]  # 코인 차감
+        self.save()
+        coin.save()
+
+        return True, f"{item_type}을(를) 구매했습니다!"
+    
 
     def feed_pet(self, pet):
         """

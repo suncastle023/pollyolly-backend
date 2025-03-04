@@ -9,5 +9,7 @@ urlpatterns = [
     path('steps/', include('steps.urls')), 
     path('coin/', include('coin.urls')), 
     path('inventory/', include('inventory.urls')),
-    
+    path('store/', include('store.urls')),
+    path('friend/', include('friend.urls')),
+
 ]
