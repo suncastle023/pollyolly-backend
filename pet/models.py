@@ -118,7 +118,7 @@ class Pet(models.Model):
         """ ✅ 장난감 사용 시 체력 감소 및 경험치 증가 """
         if inventory.toy > 0 and self.health > 0:
             exp_gain = max(10 - (self.level - 1), 1)  # 레벨이 높을수록 경험치 증가량 감소
-            self.health = max(self.experience - 5, 0)  # 체력 감소 (0 이하 불가)
+            self.health = max(self.health - 5, 0)  # 체력 감소 (0 이하 불가)
             self.experience = min(self.experience + exp_gain, 100)
             inventory.toy -= 1
             inventory.save()
