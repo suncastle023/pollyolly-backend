@@ -11,9 +11,14 @@ class Coin(models.Model):
     total_feed_bonus = models.IntegerField(default=0)  # 총 사료 보너스
     total_toy_bonus = models.IntegerField(default=0)  # 총 장난감 보너스
 
+    pending_coins = models.IntegerField(default=0)
+    pending_feed = models.IntegerField(default=0)
+    pending_toy = models.IntegerField(default=0)
+
+
     def add_coins(self, steps):
         today = timezone.now().date()
-        # 만약 마지막 보상 지급 날짜가 오늘이 아니라면 보상 기준을 리셋
+         # 오늘이 아니면 보상 기준을 리셋
         if self.last_reward_date != today:
             self.last_rewarded_steps = 0
             self.last_reward_date = today
@@ -27,12 +32,12 @@ class Coin(models.Model):
             return {"coins": 0, "feed_bonus": 0, "toy_bonus": 0}
 
         # 코인은 reward_count 만큼 지급 (즉, 각 50걸음 구간마다 1개씩)
-        self.amount += reward_count
+        self.pending_coins += reward_count
         # 이번 호출에서 보너스는 한 번만 결정 (0 또는 1)
         new_feed_bonus = random.randint(0, 1)
         new_toy_bonus = random.randint(0, 1)
-        self.total_feed_bonus += new_feed_bonus
-        self.total_toy_bonus += new_toy_bonus
+        self.pending_feed += new_feed_bonus
+        self.pending_toy += new_toy_bonus
 
         # 지급한 보상에 해당하는 걸음 수 업데이트
         self.last_rewarded_steps += reward_count * 50
