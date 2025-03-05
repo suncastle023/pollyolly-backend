@@ -12,6 +12,14 @@ from rest_framework import status
 class StepRewardAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        coin, _ = Coin.objects.get_or_create(user=request.user)
+        return Response({
+            "pending_coins": coin.pending_coins,
+            "pending_feed": coin.pending_feed,
+            "pending_toy": coin.pending_toy,
+    
+        })
     def post(self, request):
         print(f"[DEBUG] User: {request.user}, Authenticated: {request.user.is_authenticated}")
 
