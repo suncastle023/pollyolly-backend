@@ -94,7 +94,7 @@ class Pet(models.Model):
             return False 
         
         if inventory.feed > 0:
-            self.health = min(self.health + 10, 100)  # ✅ 체력 10 회복
+            self.health = min(self.health + 10, 300)  # ✅ 체력 10 회복
             inventory.feed -= 1
             inventory.save()
             self.save()

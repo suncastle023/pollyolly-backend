@@ -31,8 +31,8 @@ class Inventory(models.Model):
     def feed_pet(self, pet):
         """
         ✅ 사료를 주면 펫의 체력이 회복됩니다.
-        - 사료 1개당 체력 +10 (최대 100까지)
-        - 체력이 100이면 추가 회복 없음
+        - 사료 1개당 체력 +10 (최대 300까지)
+        - 체력이 300이면 추가 회복 없음
         - 체력이 30 이상이어야 사료를 줄 수 있음
         """
         now = timezone.now()
@@ -42,8 +42,8 @@ class Inventory(models.Model):
         if self.feed <= 0:
             return False, "사료가 부족합니다."
 
-        # 체력 회복 (100 이상 증가하지 않음)
-        pet.health = min(pet.health + 10, 100)
+        # 체력 회복 (300 이상 증가하지 않음)
+        pet.health = min(pet.health + 10, 300)
 
         self.feed -= 1
         self.last_fed = now
@@ -54,8 +54,8 @@ class Inventory(models.Model):
     def give_water(self, pet):
         """
         ✅ 물을 주면 펫의 체력이 회복됩니다.
-        - 물 1개당 체력 +30 (최대 100까지)
-        - 체력이 100이면 추가 회복 없음
+        - 물 1개당 체력 +30 (최대 300까지)
+        - 체력이 300이면 추가 회복 없음
         - 물은 오전(00:00~11:59)와 오후(12:00~23:59) 각각 한 번만 줄 수 있음
         - 체력이 30 이상이어야 물을 줄 수 있음
         """
@@ -73,7 +73,7 @@ class Inventory(models.Model):
         if self.water <= 0:
             return False, "물이 부족합니다."
 
-        # 체력 회복 (100 이상 증가하지 않음)
+        # 체력 회복 (300 이상 증가하지 않음)
         pet.health = min(pet.health + 30, 300)
 
         self.water -= 1
