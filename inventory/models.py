@@ -11,21 +11,26 @@ class Inventory(models.Model):
     last_fed = models.DateTimeField(null=True, blank=True)   # 마지막 사료 지급 시간
     last_water = models.DateTimeField(null=True, blank=True) # 마지막 물 지급 시간
 
-    def buy_item(self, item_type, coin):
+    def buy_item(self, item_type, coin, quantity=1):
         prices = {"feed": 3, "toy": 1, "water": 2}
         
         if item_type not in prices:
             return False, "잘못된 아이템입니다."
 
-        if coin.amount < prices[item_type]:
-            return False, "코인이 부족합니다."
+        total_price = prices[item_type] * quantity
 
-        setattr(self, item_type, getattr(self, item_type) + 1)  # 아이템 증가
-        coin.amount -= prices[item_type]  # 코인 차감
+        if coin.amount < total_price:
+            return False, f"코인이 부족합니다. 최대 {coin.amount // prices[item_type]}개까지 구매 가능합니다."
+
+        # 아이템 개수 증가
+        setattr(self, item_type, getattr(self, item_type) + quantity)
+        coin.amount -= total_price  # 총 가격만큼 코인 차감
+
         self.save()
         coin.save()
 
-        return True, f"{item_type}을(를) 구매했습니다!"
+        return True, f"{item_type}을(를) {quantity}개 구매했습니다!"
+
     
 
     def feed_pet(self, pet):

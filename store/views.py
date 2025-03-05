@@ -11,6 +11,7 @@ def buy_item(request):
         data = json.loads(request.body)
         user = request.user
         item_type = data.get("item")
+        quantity = data.get("quantity", 1)  # 기본값 1
 
         if not item_type:
             return JsonResponse({"error": "아이템을 선택하세요"}, status=400)
@@ -18,7 +19,7 @@ def buy_item(request):
         coin = get_object_or_404(Coin, user=user)
         inventory = get_object_or_404(Inventory, user=user)
 
-        success, message = inventory.buy_item(item_type, coin)
+        success, message = inventory.buy_item(item_type, coin, quantity)
 
         if success:
             return JsonResponse({
