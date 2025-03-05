@@ -3,6 +3,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import Coin
 from inventory.models import Inventory
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from rest_framework import status
+
 
 class StepRewardAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -35,3 +40,10 @@ class StepRewardAPIView(APIView):
             "updated_feed": inventory.feed,
             "updated_toy": inventory.toy,
         })
+
+
+#유저의 현재 코인 잔액을 반환하는 API
+@login_required
+def get_user_coins(request):
+    coin = get_object_or_404(Coin, user=request.user)
+    return JsonResponse({"coins": coin.amount})
