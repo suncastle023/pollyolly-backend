@@ -41,7 +41,7 @@ class PetListView(generics.ListAPIView):
         pets = Pet.objects.filter(owner=self.request.user)
         for pet in pets:
             pet.reduce_experience_over_time()  # ✅ 조회 시 자동으로 체력 감소 반영
-        return pets
+        return Pet.objects.filter(owner=self.request.user)
     
 
 class MyActivePetAPIView(APIView):
@@ -61,6 +61,7 @@ class MyActivePetAPIView(APIView):
             "level": pet.level,
             "experience": pet.experience,
             'health':pet.health,
+            "status": pet.status,
         }
         return Response(data)
 

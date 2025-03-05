@@ -72,6 +72,14 @@ class Pet(models.Model):
         """자동으로 이미지 경로 설정"""
         if self.breed in self.PET_TYPES.get(self.pet_type, []):
             self.image_path = f"assets/pet_images/{self.breed}.png"
+        """펫 상태 자동 업데이트"""
+        if self.health <= 0:
+            self.status = "neglected"
+            self.owner.level = max(1, self.owner.level - 1)  # ✅ 사용자의 레벨 1 감소
+            self.owner.save()
+        elif self.level >= 10 and self.experience >= 100:
+            self.status = "aged"
+
         super().save(*args, **kwargs)
 
     def __str__(self):
