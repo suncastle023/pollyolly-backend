@@ -89,45 +89,54 @@ class Pet(models.Model):
         return chosen_type, chosen_breed
 
     def feed_pet(self, inventory):
-        # 사료와 물을 통해 체력 회복 
-        if self.health < 30:
-            return False 
-        
+        """ 사료 또는 물 사용 시 체력 회복 """
         if inventory.feed > 0:
-            self.health = min(self.health + 10, 300)  # ✅ 체력 10 회복
+            self.health = min(self.health + 10, 300)
             inventory.feed -= 1
             inventory.save()
             self.save()
-            if self.experience >= 100:
-                self.level_up()
-            return True
-        
+            return False  # 경험치 변화 없음
+
         if inventory.water > 0:
-            self.health = min(self.health + 30, 300)  # ✅ 체력 30 회복
+            self.health = min(self.health + 30, 300)
             inventory.water -= 1
             inventory.save()
             self.save()
-            if self.experience >= 100:
-                self.level_up()
-            return True
-            
+            return False  # 경험치 변화 없음
+
         return False
 
+
+    def gain_experience(self, exp_gain):
+        """
+        경험치를 증가시키고, 경험치가 100 이상이면 레벨업을 자동으로 처리하는 함수.
+        """
+        self.experience += exp_gain
+        leveled_up = False
+
+        # 경험치가 100 이상이면 레벨업
+        while self.experience >= 100 and self.level < 10:
+            self.experience -= 100
+            self.level += 1
+            leveled_up = True
+
+        self.save()
+        return leveled_up
+    
 
     def play_with_toy(self, inventory):
-        """ ✅ 장난감 사용 시 체력 감소 및 경험치 증가 """
+        """ 장난감 사용 시 경험치 증가 및 체력 감소 """
         if inventory.toy > 0 and self.health > 0:
-            exp_gain = max(10 - (self.level - 1), 1)  # 레벨이 높을수록 경험치 증가량 감소
-            self.health = max(self.health - 5, 0)  # 체력 감소 (0 이하 불가)
-            self.experience = min(self.experience + exp_gain, 100)
+            exp_gain = max(10 - (self.level - 1), 1)  # 레벨이 높을수록 경험치 감소
+            self.health = max(self.health - 5, 0)  # 체력 감소
             inventory.toy -= 1
             inventory.save()
-            self.save()
 
-            if self.experience >= 100:  # ✅ 체력이 가득 차면 레벨업
-                self.level_up()
-            return True
+            # 경험치 증가 및 레벨업 여부 체크
+            return self.gain_experience(exp_gain)
         return False
+    
+
 
     def level_up(self):
         """ ✅ 경험치가 100 이상이면 레벨업 처리 """

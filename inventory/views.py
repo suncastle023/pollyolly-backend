@@ -1,3 +1,5 @@
+# inventory/views.py
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -57,15 +59,20 @@ class PlayWithToyAPIView(APIView):
         pet = Pet.objects.get(owner=request.user)
         inventory = Inventory.objects.get(user=request.user)
 
-        if pet.play_with_toy(inventory):
-            return Response({
-                "success": True, 
-                "message": "펫과 장난감을 사용했어요!",
-                "experience": pet.experience,  # ✅ 경험치 포함
-                "toy": inventory.toy,  # ✅ 남은 장난감 개수 포함
-            })  
-        
-        return Response({"success": False, "message": "장난감이 부족합니다."}, status=400)
+        leveled_up = pet.play_with_toy(inventory)  # ✅ 경험치 증가 및 레벨업 자동 처리
+
+        response_data = {
+            "success": True,
+            "message": "펫과 장난감을 사용했어요!",
+            "experience": pet.experience,
+            "toy": inventory.toy,
+        }
+
+        if leveled_up:
+            response_data["message"] = f"🎉 {pet.name}의 레벨이 {pet.level}이 되었습니다! 축하합니다!"
+            response_data["new_level"] = pet.level
+
+        return Response(response_data, status=200)
 
 
 class GetInventoryAPIView(APIView):
