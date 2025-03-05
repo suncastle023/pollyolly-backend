@@ -22,41 +22,32 @@ class StepRewardAPIView(APIView):
     
         })
     def post(self, request):
-        print(f"[DEBUG] User: {request.user}, Authenticated: {request.user.is_authenticated}")
-
         if not request.user.is_authenticated:
             return Response({"error": "User is not authenticated"}, status=status.HTTP_403_FORBIDDEN)
 
-        # 🚀 steps 값이 음수가 되지 않도록 보정
         try:
-            steps = max(0, int(request.data.get("steps", 0)))  # ✅ 최소값 0 보장
+            steps = max(0, int(request.data.get("steps", 0)))
         except (ValueError, TypeError):
             steps = 0
 
         coin, created = Coin.objects.get_or_create(user=request.user)
         today = timezone.now().date()
-        # 오늘이 아니면 보상 기준 리셋
         if coin.last_reward_date != today:
             coin.last_rewarded_steps = 0
             coin.last_reward_date = today
 
-        # 기존 add_coins 로직을 호출하여 보상 계산 (이미 coin.amount에 더해짐)
-        reward = coin.add_coins(steps)
-        # 지급되지 않은 보상은 reward["coins"] (즉, 이번 호출 후 총 코인 수)
-        # 대신 pending_coins에 보상 값을 그대로 넣음
-        coin.pending_coins = reward["coins"]
-        # 보너스도 pending에 저장 (필요에 따라 추가 조정 가능)
-        coin.pending_feed = reward["feed_bonus"]
-        coin.pending_toy = reward["toy_bonus"]
+        # add_coins 내부에서 pending 코인이 올바르게 누적되고 저장됨
+        coin.add_coins(steps)
         coin.save()
 
         return Response({
-            "coins": coin.amount,              # 누적된 코인 잔액을 명시적으로 반환
+            "coins": coin.amount,
             "pending_coins": coin.pending_coins,
             "pending_feed": coin.pending_feed,
             "pending_toy": coin.pending_toy,
             "message": "Pending rewards are updated. Press the coin button to claim rewards."
         })
+
     
 
 class ClaimCoinAPIView(APIView):
