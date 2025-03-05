@@ -62,10 +62,12 @@ class PlayWithToyAPIView(APIView):
         leveled_up = pet.play_with_toy(inventory)  # ✅ 경험치 증가 및 레벨업 자동 처리
 
         response_data = {
-            "success": True,
+            "success": True, 
             "message": "펫과 장난감을 사용했어요!",
-            "experience": pet.experience,
-            "toy": inventory.toy,
+            "level": pet.level,  # ✅ 레벨 반환
+            "experience": pet.experience,  
+            "status": pet.status,
+            "toy": inventory.toy,  
         }
 
         if leveled_up:

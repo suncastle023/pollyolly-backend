@@ -5,6 +5,12 @@ from datetime import timedelta
 from django.utils import timezone
 
 class Pet(models.Model):
+    STATUS_CHOICES = [
+        ("active", "현재 키우는 중"),
+        ("neglected", "관리를 안 해서 죽음"),
+        ("aged", "늙어서 자연사"),
+    ]
+
     PET_TYPES = {
         "강아지": ["시바견", "리트리버", "푸들","베니"],
         "고양이": ["러시안블루", "샴", "먼치킨"],
@@ -58,17 +64,36 @@ class Pet(models.Model):
     level = models.IntegerField(default=1)
     experience = models.IntegerField(default=0) 
     health = models.IntegerField(default=50)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="active")  
     last_activity = models.DateTimeField(default=timezone.now) 
     image_path = models.CharField(max_length=255, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         """자동으로 이미지 경로 설정"""
-        if self.breed in self.IMAGE_PATHS:
-            self.image_path = self.IMAGE_PATHS[self.breed]
+        if self.breed in self.PET_TYPES.get(self.pet_type, []):
+            self.image_path = f"assets/pet_images/{self.breed}.png"
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.name} ({self.breed}) - Lv.{self.level}"
+        return f"{self.name} ({self.breed}) - Lv.{self.level} ({self.status})"
+
+    def is_active_pet(self):
+        """ ✅ 현재 키우는 펫인지 확인 """
+        return self.status == "active"
+
+    def set_pet_status(self, new_status):
+        """ ✅ 펫 상태 변경 함수 """
+        if new_status in dict(self.STATUS_CHOICES):
+            if new_status == "neglected":
+                self.decrease_owner_level() 
+            self.status = new_status
+            self.save()
+
+    def decrease_owner_level(self):
+        """ ✅ 사용자의 레벨이 1 이상이면 1 감소 """
+        if hasattr(self.owner, "level") and self.owner.level > 1:
+            self.owner.level -= 1
+            self.owner.save()
 
     @classmethod
     def get_available_pets(cls, level):
@@ -108,31 +133,38 @@ class Pet(models.Model):
 
 
     def gain_experience(self, exp_gain):
-        """
-        경험치를 증가시키고, 경험치가 100 이상이면 레벨업을 자동으로 처리하는 함수.
-        """
+        """ ✅ 경험치 증가 및 자동 레벨업 """
+        if not self.is_active_pet():
+            return False  # ✅ 과거 펫은 경험치 못 얻음
+
         self.experience += exp_gain
         leveled_up = False
 
-        # 경험치가 100 이상이면 레벨업
-        while self.experience >= 100 and self.level < 10:
-            self.experience -= 100
-            self.level += 1
-            leveled_up = True
+        while self.experience >= 100:
+            if self.level < 10:
+                self.experience -= 100
+                self.level += 1
+                leveled_up = True
+            else:
+                # ✅ 레벨 10이면 자연사 처리
+                self.experience = 0
+                self.set_pet_status("aged")
+                return True
 
         self.save()
         return leveled_up
     
 
     def play_with_toy(self, inventory):
-        """ 장난감 사용 시 경험치 증가 및 체력 감소 """
+        """ ✅ 장난감 사용 시 경험치 증가 및 체력 감소 """
+        if not self.is_active_pet():
+            return False  # ✅ 과거 펫은 놀아줄 수 없음
+
         if inventory.toy > 0 and self.health > 0:
-            exp_gain = max(10 - (self.level - 1), 1)  # 레벨이 높을수록 경험치 감소
-            self.health = max(self.health - 5, 0)  # 체력 감소
+            exp_gain = max(10 - (self.level - 1), 1)
+            self.health = max(self.health - 5, 0)
             inventory.toy -= 1
             inventory.save()
-
-            # 경험치 증가 및 레벨업 여부 체크
             return self.gain_experience(exp_gain)
         return False
     
@@ -147,15 +179,17 @@ class Pet(models.Model):
 
 
     def reduce_experience_over_time(self):
+        """ ✅ 시간이 지날수록 체력 감소, 체력 0이면 사망 처리 """
+        if not self.is_active_pet():
+            return
+
         now = timezone.now()
 
-        # last_activity가 None이면 현재 시간으로 초기화
-        if self.last_activity is None:
-            self.last_activity = now
-
-        # last_activity가 now보다 작으면, 1시간씩 증가시키면서 체력을 깎는다.
         while self.last_activity + timedelta(hours=1) <= now:
-            self.health = max(self.health - 1, 0)  # 시간당 체력 1 감소
+            self.health = max(self.health - 1, 0)
             self.last_activity += timedelta(hours=1)
+
+        if self.health == 0:
+            self.set_pet_status("neglected")  # ✅ 체력이 0이면 관리 부족으로 사망 처리
 
         self.save()
