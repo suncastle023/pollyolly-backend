@@ -15,6 +15,7 @@ class StepRewardAPIView(APIView):
     def get(self, request):
         coin, _ = Coin.objects.get_or_create(user=request.user)
         return Response({
+            "coins": coin.amount,  
             "pending_coins": coin.pending_coins,
             "pending_feed": coin.pending_feed,
             "pending_toy": coin.pending_toy,
@@ -50,6 +51,7 @@ class StepRewardAPIView(APIView):
         coin.save()
 
         return Response({
+            "coins": coin.amount,              # 누적된 코인 잔액을 명시적으로 반환
             "pending_coins": coin.pending_coins,
             "pending_feed": coin.pending_feed,
             "pending_toy": coin.pending_toy,
