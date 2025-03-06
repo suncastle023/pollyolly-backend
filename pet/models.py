@@ -12,7 +12,7 @@ class Pet(models.Model):
     ]
 
     PET_TYPES = {
-        "강아지": ["시바견", "리트리버", "푸들","베니"],
+        "강아지": ["시바견", "리트리버", "푸들","베니","polly"],
         "고양이": ["러시안블루", "샴", "먼치킨"],
         "토끼": ["핑크토끼"],
         "햄스터": ["햄스터"],
@@ -36,6 +36,9 @@ class Pet(models.Model):
     ]
 
     IMAGE_PATHS = {
+        "polly": "assets/pet_images/polly.png",
+        "pollyL": "assets/pet_images/pollyL.png",
+        "pollyR": "assets/pet_images/pollyR.png",
         "베니": "assets/pet_images/benny_sad.png",
         "시바견": "assets/pet_images/shiba_inu.png",
         "리트리버": "assets/pet_images/retriever.png",
