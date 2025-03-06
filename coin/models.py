@@ -33,17 +33,20 @@ class Coin(models.Model):
 
         # 코인은 reward_count 만큼 지급 (즉, 각 50걸음 구간마다 1개씩)
         self.pending_coins += reward_count
-        # 이번 호출에서 보너스는 한 번만 결정 (0 또는 1)
-        new_feed_bonus = random.randint(0, 1)
-        new_toy_bonus = random.randint(0, 1)
-        self.pending_feed += new_feed_bonus
-        self.pending_toy += new_toy_bonus
+        total_feed_bonus = 0
+        total_toy_bonus = 0
+
+        # reward_count만큼 각 보상마다 보너스를 랜덤으로 결정
+        for _ in range(reward_count):
+            total_feed_bonus += random.randint(0, 1)
+            total_toy_bonus += random.randint(0, 1)
+
+        self.pending_feed += total_feed_bonus
+        self.pending_toy += total_toy_bonus
 
         # 지급한 보상에 해당하는 걸음 수 업데이트
         self.last_rewarded_steps += reward_count * 50
         self.save()
 
-        print(f"[DEBUG] {self.user.email} | Steps: {steps} (New: {new_steps}) → 마지막 보상받은 걸음수: {self.last_rewarded_steps} → 현재 가진 코인: {self.amount}")
-        print(f"[DEBUG] {self.user.email} | New Feed Bonus: {new_feed_bonus}, New Toy Bonus: {new_toy_bonus}")
-
-        return {"coins": self.amount, "feed_bonus": new_feed_bonus, "toy_bonus": new_toy_bonus}
+   
+        return {"coins": self.amount, "feed_bonus": total_feed_bonus, "toy_bonus": total_toy_bonus}
