@@ -51,7 +51,6 @@ class GiveWaterAPIView(APIView):
         return Response({"success": False, "message": message, "health": pet.health, "last_water": inventory.last_water}, status=400)
 
 
-
 class PlayWithToyAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -60,6 +59,12 @@ class PlayWithToyAPIView(APIView):
         inventory = Inventory.objects.get(user=request.user)
 
         leveled_up = pet.play_with_toy(inventory)  # ✅ 경험치 증가 및 레벨업 자동 처리
+
+        if inventory.toy <= 0:  # 🔴 장난감이 없을 경우 예외 처리
+            return Response({"success": False, "message": "장난감이 부족합니다."}, status=400)
+
+        if not pet.is_active_pet():
+            return Response({"success": False, "message": "현재 키우는 펫이 아닙니다."}, status=400)
 
         response_data = {
             "success": True, 
