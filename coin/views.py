@@ -61,7 +61,7 @@ class ClaimCoinAPIView(APIView):
 
         if coin.pending_coins > 0:
             # 한 번 누를 때마다 1코인씩 지급 (최대 100개 제한)
-            coin.amount = min(100, coin.amount + 1)
+            coin.amount = coin.amount + 1
             coin.pending_coins -= 1
 
             # 각 코인 지급에 대해, pending_feed와 pending_toy가 있다면 1씩 지급하고 차감
