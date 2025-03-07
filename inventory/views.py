@@ -23,7 +23,7 @@ class FeedPetAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        pet = Pet.objects.get(owner=request.user)
+        pet = Pet.objects.filter(owner=request.user, status="active").first()  
         inventory = Inventory.objects.get(user=request.user)
         success, message = inventory.feed_pet(pet)  # 튜플 언패킹
         if success:
@@ -34,7 +34,7 @@ class GiveWaterAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        pet = Pet.objects.get(owner=request.user)
+        pet = Pet.objects.filter(owner=request.user, status="active").first()  
         inventory = Inventory.objects.get(user=request.user)
         
         success, message = inventory.give_water(pet)  # ✅ 튜플 언패킹
@@ -55,7 +55,7 @@ class PlayWithToyAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        pet = Pet.objects.get(owner=request.user)
+        pet = Pet.objects.filter(owner=request.user, status="active").first()  
         inventory = Inventory.objects.get(user=request.user)
 
         leveled_up = pet.play_with_toy(inventory)  # ✅ 경험치 증가 및 레벨업 자동 처리
