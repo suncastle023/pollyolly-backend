@@ -24,11 +24,9 @@ class SendFriendRequestView(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            # ✅ 요청된 데이터 확인 (JSON 파싱)
-            data = json.loads(request.body.decode("utf-8"))
-            receiver_email = data.get("friend_email", "").strip().lower()  # ✅ 이메일 소문자 변환
+            receiver_email = request.data.get("friend_email", "").strip().lower()  # ✅ 이메일 소문자로 변환 및 공백 제거
 
-            # ✅ [DEBUG] 서버에서 받은 이메일 출력
+            # ✅ [DEBUG] 서버에서 받은 이메일 확인
             print(f"📌 [DEBUG] 요청된 친구 이메일: {receiver_email}")
 
             if not receiver_email:
@@ -51,7 +49,7 @@ class SendFriendRequestView(generics.CreateAPIView):
             if Friend.objects.filter(user=sender, friend=receiver).exists():
                 return Response({"error": "이미 친구입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # ✅ 이미 친구 요청을 보냈는지 확인
+            # ✅ 이미 보낸 친구 요청이 있는지 확인
             if FriendRequest.objects.filter(sender=sender, receiver=receiver, status="pending").exists():
                 return Response({"error": "이미 보낸 친구 요청이 있습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -62,17 +60,9 @@ class SendFriendRequestView(generics.CreateAPIView):
                 status=status.HTTP_201_CREATED,
             )
 
-        except json.JSONDecodeError:
-            print("❌ [DEBUG] JSON 디코딩 오류 발생")
-            return Response(
-                {"error": "잘못된 요청 형식입니다. JSON 형식이어야 합니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         except Exception as e:
             print(f"❌ [DEBUG] 서버 오류 발생: {str(e)}")
             return Response({"error": "서버 내부 오류 발생"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 # ✅ 받은 친구 요청 목록 조회
