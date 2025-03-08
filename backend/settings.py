@@ -165,7 +165,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://www.pollyolly.store",
 ]
 
-CSRF_USE_SESSIONS = True 
+
 CSRF_COOKIE_NAME = "csrftoken"
 CSRF_COOKIE_HTTPONLY = False  # 쿠키를 JavaScript에서 접근할 수 있도록 설정
 CSRF_COOKIE_SAMESITE = "Lax"  # CSRF 쿠키가 cross-site 요청에서 유효하게 설정
