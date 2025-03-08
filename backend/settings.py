@@ -173,8 +173,25 @@ CSRF_COOKIE_SECURE = False  # HTTPS가 아니라면 False로 설정 (HTTPS라면
 SESSION_COOKIE_NAME = "sessionid"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False
-SESSION_ENGINE = "django.contrib.sessions.backends.db"  # 기본 DB 세션 엔진
+#SESSION_ENGINE = "django.contrib.sessions.backends.db"  # 기본 DB 세션 엔진
 SESSION_COOKIE_SAMESITE = "Lax" 
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",  # Redis DB 1번 사용
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
+SESSION_COOKIE_AGE = 1209600  # 세션 유지 시간 (14일)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # 브라우저 종료 시 세션 유지 여부
+SESSION_SAVE_EVERY_REQUEST = True  # 사용자가 활동하면 세션 연장
+
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
