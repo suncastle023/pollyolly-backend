@@ -50,3 +50,10 @@ class Coin(models.Model):
 
    
         return {"coins": self.amount, "feed_bonus": total_feed_bonus, "toy_bonus": total_toy_bonus}
+    
+def reset_daily_steps(self):
+    today = timezone.now().date()
+    if self.last_reward_date != today:
+        self.last_rewarded_steps = 0
+        self.last_reward_date = today
+        self.save()
