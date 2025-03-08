@@ -8,4 +8,4 @@ class StepCount(models.Model):
     steps = models.IntegerField()  # 걸음 수 데이터
 
     def __str__(self):
-        return f"{self.user.username} - {self.steps} steps on {self.date}"
+        return f"{self.user.nickname} - {self.steps} steps on {self.date}"
