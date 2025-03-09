@@ -60,18 +60,12 @@ class ClaimCoinAPIView(APIView):
         coin, _ = Coin.objects.get_or_create(user=request.user)
 
         if coin.pending_coins > 0:
-            # 한 번 누를 때마다 1코인씩 지급 (최대 100개 제한)
-            coin.amount = coin.amount + 1
-            coin.pending_coins -= 1
+            # pending_rewards 리스트에서 첫 번째 항목을 꺼내서 그 보상을 지급
+            reward = coin.pending_rewards.pop(0)
+            coin.amount += 1  # 코인 1 지급
 
-            # 각 코인 지급에 대해, pending_feed와 pending_toy가 있다면 1씩 지급하고 차감
-            feed_bonus = 1 if coin.pending_feed > 0 else 0
-            toy_bonus = 1 if coin.pending_toy > 0 else 0
-
-            if feed_bonus:
-                coin.pending_feed -= 1
-            if toy_bonus:
-                coin.pending_toy -= 1
+            feed_bonus = reward.get("feed", 0)
+            toy_bonus = reward.get("toy", 0)
 
             from inventory.models import Inventory
             inventory, _ = Inventory.objects.get_or_create(user=request.user)
@@ -95,7 +89,7 @@ class ClaimCoinAPIView(APIView):
             })
         else:
             return Response({"message": "No rewards to claim"}, status=status.HTTP_400_BAD_REQUEST)
-
+        
 
 
 #유저의 현재 코인 잔액을 반환하는 API
