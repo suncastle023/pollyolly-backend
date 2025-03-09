@@ -17,7 +17,6 @@ class CoinAdmin(admin.ModelAdmin):
         "total_pending_rewards",  # ✅ 보류 보상 개수 한눈에 보기
         "last_rewarded_steps",
         "last_reward_date",
-        "display_pending_rewards",  # ✅ 보류된 보상 HTML로 표시
         "clear_rewards_button",  # ✅ 보류 보상을 초기화하는 버튼 추가
     )
 
@@ -28,9 +27,9 @@ class CoinAdmin(admin.ModelAdmin):
         ("유저 정보", {"fields": ("user",)}),
         ("코인 정보", {"fields": ("amount", "pending_coins", "pending_feed", "pending_toy")}),
         ("보상 기록", {"fields": ("last_rewarded_steps", "last_reward_date")}),
-        ("Pending Rewards 상세", {"fields": ("display_pending_rewards",)}),
     )
 
+    # ✅ readonly_fields에만 추가 (fieldsets에서 제거)
     readonly_fields = ("display_pending_rewards",)
 
     def total_pending_rewards(self, obj):
@@ -72,7 +71,7 @@ class CoinAdmin(admin.ModelAdmin):
             "pending_toy",
             "last_rewarded_steps",
             "last_reward_date",
-            "display_pending_rewards",
+            "display_pending_rewards",  # ✅ readonly_fields에만 유지
         )
 
     def get_urls(self):
