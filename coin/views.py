@@ -7,7 +7,10 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from rest_framework import status
+from inventory.models import Inventory
+import logging
 
+logger = logging.getLogger(__name__)
 
 class StepRewardAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -49,7 +52,6 @@ class StepRewardAPIView(APIView):
         })
 
     
-
 class ClaimCoinAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -59,18 +61,45 @@ class ClaimCoinAPIView(APIView):
 
         coin, _ = Coin.objects.get_or_create(user=request.user)
 
+        # ✅ `pending_rewards`가 None이거나 리스트가 아니면 초기화
+        if not isinstance(coin.pending_rewards, list):
+            coin.pending_rewards = []
+
+        # ✅ 데이터 불일치 확인 및 자동 수정
+        if len(coin.pending_rewards) != coin.pending_coins:
+            logger.warning(f"⚠️ {coin.user}의 보류 코인({coin.pending_coins})과 보류 보상({len(coin.pending_rewards)}) 불일치 감지")
+            
+            if len(coin.pending_rewards) < coin.pending_coins:
+                # 부족한 경우 빈 보상 추가
+                missing_rewards = [{"feed": 0, "toy": 0} for _ in range(coin.pending_coins - len(coin.pending_rewards))]
+                coin.pending_rewards.extend(missing_rewards)
+            else:
+                # 너무 많은 경우 초과된 부분 제거
+                coin.pending_rewards = coin.pending_rewards[:coin.pending_coins]
+
+            coin.save()
+
+        # ✅ 보상 받을 수 있는지 다시 확인
         if coin.pending_coins > 0 and coin.pending_rewards:
             reward = coin.pending_rewards.pop(0)
 
             coin.amount += 1  
             coin.pending_coins -= 1
-            feed_bonus = reward["feed"]
-            toy_bonus = reward["toy"]
 
-            coin.pending_feed -= feed_bonus
-            coin.pending_toy -= toy_bonus
+            feed_bonus = reward.get("feed", 0)
+            toy_bonus = reward.get("toy", 0)
 
-            from inventory.models import Inventory
+            if coin.pending_feed >= feed_bonus:
+                coin.pending_feed -= feed_bonus
+            else:
+                feed_bonus = 0
+
+            if coin.pending_toy >= toy_bonus:
+                coin.pending_toy -= toy_bonus
+            else:
+                toy_bonus = 0
+
+            # ✅ 인벤토리 반영
             inventory, _ = Inventory.objects.get_or_create(user=request.user)
             inventory.feed += feed_bonus
             inventory.toy += toy_bonus
