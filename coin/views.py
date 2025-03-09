@@ -59,13 +59,16 @@ class ClaimCoinAPIView(APIView):
 
         coin, _ = Coin.objects.get_or_create(user=request.user)
 
-        if coin.pending_coins > 0:
-            # pending_rewards 리스트에서 첫 번째 항목을 꺼내서 그 보상을 지급
+        if coin.pending_coins > 0 and coin.pending_rewards:
             reward = coin.pending_rewards.pop(0)
-            coin.amount += 1  # 코인 1 지급
 
-            feed_bonus = reward.get("feed", 0)
-            toy_bonus = reward.get("toy", 0)
+            coin.amount += 1  
+            coin.pending_coins -= 1
+            feed_bonus = reward["feed"]
+            toy_bonus = reward["toy"]
+
+            coin.pending_feed -= feed_bonus
+            coin.pending_toy -= toy_bonus
 
             from inventory.models import Inventory
             inventory, _ = Inventory.objects.get_or_create(user=request.user)
