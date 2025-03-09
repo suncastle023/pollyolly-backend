@@ -79,9 +79,9 @@ class ClaimCoinAPIView(APIView):
 
             coin.save()
 
-        # ✅ 보상 받을 수 있는지 다시 확인
+          # 보류된 코인과 보상이 있는 경우만 처리
         if coin.pending_coins > 0 and coin.pending_rewards:
-            reward = coin.pending_rewards.pop(0)
+            reward = coin.pending_rewards.pop(0)  # 첫 번째 보상 제거
 
             coin.amount += 1  
             coin.pending_coins -= 1
@@ -89,17 +89,19 @@ class ClaimCoinAPIView(APIView):
             feed_bonus = reward.get("feed", 0)
             toy_bonus = reward.get("toy", 0)
 
+            # 🛠 보상이 적용되지 않는 문제 해결 → 정확하게 감소시키기
             if coin.pending_feed >= feed_bonus:
                 coin.pending_feed -= feed_bonus
             else:
-                feed_bonus = 0
+                feed_bonus = 0  # 데이터가 불일치할 경우 보정
 
             if coin.pending_toy >= toy_bonus:
                 coin.pending_toy -= toy_bonus
             else:
-                toy_bonus = 0
+                toy_bonus = 0  # 데이터가 불일치할 경우 보정
 
-            # ✅ 인벤토리 반영
+            # 인벤토리 업데이트
+            from inventory.models import Inventory
             inventory, _ = Inventory.objects.get_or_create(user=request.user)
             inventory.feed += feed_bonus
             inventory.toy += toy_bonus
