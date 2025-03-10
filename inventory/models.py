@@ -9,8 +9,9 @@ class Inventory(models.Model):
     # 일반 & 프리미엄 아이템 개수
     feed = models.IntegerField(default=5)   # 일반 사료
     pm_feed = models.IntegerField(default=0)  # 프리미엄 사료
-    toy = models.IntegerField(default=5)    # 일반 장난감
-    pm_toy = models.IntegerField(default=0)  # 프리미엄 장난감
+    toy1 = models.IntegerField(default=5)  # 장난감1
+    toy2 = models.IntegerField(default=0)  # 장난감2
+    toy3 = models.IntegerField(default=0)  # 장난감3
     water = models.IntegerField(default=5)  # 일반 물
     pm_water = models.IntegerField(default=0)  # 프리미엄 물
 
@@ -39,7 +40,7 @@ class Inventory(models.Model):
         # 카테고리별 처리
         if item.name in ["feed", "pm_feed"]:
             setattr(self, item.name, getattr(self, item.name, 0) + quantity)
-        elif item.name in ["toy", "pm_toy"]:
+        elif item.name in ["toy1", "toy2", "toy3"]:
             setattr(self, item.name, getattr(self, item.name, 0) + quantity)
         elif item.name in ["water", "pm_water"]:
             setattr(self, item.name, getattr(self, item.name, 0) + quantity)
@@ -73,8 +74,9 @@ class Inventory(models.Model):
         inventory_data = {
             "feed": self.feed,
             "pm_feed": self.pm_feed,
-            "toy": self.toy,
-            "pm_toy": self.pm_toy,
+            "toy1": self.toy1,
+            "toy2": self.toy2,
+            "toy3": self.toy3,
             "water": self.water,
             "pm_water": self.pm_water,
         }

@@ -13,8 +13,9 @@ class Item(models.Model):
     ITEM_PRICES = {
         "feed": 3,
         "pm_feed": 6,
-        "toy": 1,
-        "pm_toy": 2,
+        "toy1": 1,
+        "toy2": 2,
+        "toy3": 3,
         "water": 2,
         "pm_water": 4,
         "default_bg": 10,

@@ -130,23 +130,36 @@ class Pet(models.Model):
         return chosen_type, chosen_breed
 
     def feed_pet(self, inventory):
-        """ 사료 또는 물 사용 시 체력 회복 """
-        if inventory.feed > 0:
-            self.health = min(self.health + 10, 300)
+        """ ✅ 사료 또는 물 사용 시 체력 회복 """
+        if inventory.pm_feed > 0:
+            self.health = min(self.health + 20, 300)  # 프리미엄 사료 체력 +20
+            inventory.pm_feed -= 1
+        elif inventory.feed > 0:
+            self.health = min(self.health + 10, 300)  # 일반 사료 체력 +10
             inventory.feed -= 1
-            inventory.save()
-            self.save()
-            return False  # 경험치 변화 없음
+        else:
+            return False, "사료가 부족합니다."
 
-        if inventory.water > 0:
-            self.health = min(self.health + 30, 300)
+        inventory.save()
+        self.save()
+        return True, "펫이 사료를 먹었습니다!"
+
+
+    def give_water(self, inventory):
+        """ ✅ 물 사용 시 체력 회복 """
+        if inventory.pm_water > 0:
+            self.health = min(self.health + 50, 300)  # 프리미엄 물 체력 +50
+            inventory.pm_water -= 1
+        elif inventory.water > 0:
+            self.health = min(self.health + 30, 300)  # 일반 물 체력 +30
             inventory.water -= 1
-            inventory.save()
-            self.save()
-            return False  # 경험치 변화 없음
+        else:
+            return False, "물이 부족합니다."
 
-        return False
-
+        inventory.save()
+        self.save()
+        return True, "펫이 물을 마셨습니다!"
+    
 
     def gain_experience(self, exp_gain):
         """ ✅ 경험치 증가 및 자동 레벨업 """
@@ -171,18 +184,25 @@ class Pet(models.Model):
         return leveled_up
     
 
-    def play_with_toy(self, inventory):
-        """ ✅ 장난감 사용 시 경험치 증가 및 체력 감소 """
-        if not self.is_active_pet():
-            return False  # ✅ 과거 펫은 놀아줄 수 없음
 
-        if inventory.toy > 0 and self.health > 0:
-            exp_gain = max(10 - (self.level - 1), 1)
-            self.health = max(self.health - 5, 0)
-            inventory.toy -= 1
-            inventory.save()
-            return self.gain_experience(exp_gain)
-        return False
+    def play_with_toy(self, inventory, toy_type):
+        """ ✅ 장난감 사용 시 경험치 증가 및 체력 감소 """
+        if toy_type not in ["toy1", "toy2", "toy3"]:
+            return False, "잘못된 장난감 유형입니다."
+
+        if getattr(inventory, toy_type) <= 0:
+            return False, f"{toy_type}이 부족합니다."
+
+        if self.health <= 0:
+            return False, "펫의 체력이 부족합니다."
+
+        exp_gain = max(10 - (self.level - 1), 1)
+        self.health = max(self.health - 5, 0)
+        setattr(inventory, toy_type, getattr(inventory, toy_type) - 1)
+        inventory.save()
+
+        return self.gain_experience(exp_gain), "펫이 장난감으로 놀았습니다!"
+    
     
 
 

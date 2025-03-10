@@ -66,22 +66,35 @@ class PlayWithToyAPIView(APIView):
     def post(self, request):
         pet = Pet.objects.filter(owner=request.user, status="active").first()  
         inventory = Inventory.objects.get(user=request.user)
+        toy_type = request.data.get("toy_type")  # ✅ 장난감 종류 지정
+        leveled_up = False
 
-        leveled_up = pet.play_with_toy(inventory)  # ✅ 경험치 증가 및 레벨업 자동 처리
+        # ✅ 장난감 종류별 감소
+        if toy_type not in ["toy1", "toy2", "toy3"]:
+            return Response({"success": False, "message": "잘못된 장난감 종류입니다."}, status=400)
 
-        if inventory.toy <= 0:  # 🔴 장난감이 없을 경우 예외 처리
-            return Response({"success": False, "message": "장난감이 부족합니다."}, status=400)
+        if getattr(inventory, toy_type) <= 0:
+            return Response({"success": False, "message": f"{toy_type}이 부족합니다."}, status=400)
 
         if not pet.is_active_pet():
             return Response({"success": False, "message": "현재 키우는 펫이 아닙니다."}, status=400)
 
+        setattr(inventory, toy_type, getattr(inventory, toy_type) - 1)  # ✅ 해당 장난감 개수 감소
+        inventory.save()
+
+        leveled_up = pet.play_with_toy(inventory)
+
         response_data = {
             "success": True, 
-            "message": "펫과 장난감을 사용했어요!",
-            "level": pet.level,  # ✅ 레벨 반환
-            "experience": pet.experience,  
+            "message": f"펫이 {toy_type}와 놀았어요!",
+            "level": pet.level,
+            "experience": pet.experience,
             "status": pet.status,
-            "toy": inventory.toy,  
+            "remaining_toys": {
+                "toy1": inventory.toy1,
+                "toy2": inventory.toy2,
+                "toy3": inventory.toy3,
+            },
         }
 
         if leveled_up:
@@ -91,14 +104,10 @@ class PlayWithToyAPIView(APIView):
         return Response(response_data, status=200)
 
 
+
 class GetInventoryAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         inventory, _ = Inventory.objects.get_or_create(user=request.user)
-        data = {
-            "feed": inventory.feed,
-            "water": inventory.water,
-            "toy": inventory.toy,
-        }
-        return Response(data)
+        return Response(inventory.get_inventory_status())
