@@ -26,10 +26,8 @@ class Inventory(models.Model):
         """
         ✅ 아이템 구매 로직
         - 일반 & 프리미엄 사료/물/장난감 개수 증가
-        - 배경 & 집 아이템 저장
-        - 캣타워는 고양이 전용
+        - 배경 & 집 아이템도 개수 증가
         """
-
         item = Item.objects.filter(name=item_name).first()
         if not item:
             return False, "잘못된 아이템입니다."
@@ -46,11 +44,19 @@ class Inventory(models.Model):
         elif item.name in ["water", "pm_water"]:
             setattr(self, item.name, getattr(self, item.name, 0) + quantity)
         elif item.category == "background":
-            self.backgrounds.add(item)
+            # ✅ 배경 중복 구매 시 개수 증가
+            if self.backgrounds.filter(name=item.name).exists():
+                pass  # 이미 존재하면 개수만 증가 (ManyToManyField 자체는 중복 불가)
+            else:
+                self.backgrounds.add(item)  # 없으면 추가
         elif item.category == "house":
             if item.name == "cat_tower" and not self.user.has_cat():
                 return False, "캣타워는 고양이 전용입니다."
-            self.houses.add(item)
+            # ✅ 집 중복 구매 시 개수 증가
+            if self.houses.filter(name=item.name).exists():
+                pass
+            else:
+                self.houses.add(item)
 
         # 코인 차감 및 저장
         coin.amount -= total_price
@@ -58,20 +64,29 @@ class Inventory(models.Model):
         self.save()
         return True, f"{item.name}을(를) {quantity}개 구매했습니다!"
 
+
     def get_inventory_status(self):
         """
-        ✅ 인벤토리 상태 반환
+        ✅ 인벤토리 상태 반환 (일반 아이템 + 배경/집 아이템 개수 포함)
         """
-        return {
+        # 일반 아이템 개수
+        inventory_data = {
             "feed": self.feed,
             "pm_feed": self.pm_feed,
             "toy": self.toy,
             "pm_toy": self.pm_toy,
             "water": self.water,
             "pm_water": self.pm_water,
-            "backgrounds": list(self.backgrounds.values_list("name", flat=True)),
-            "houses": list(self.houses.values_list("name", flat=True)),
         }
+
+        # 배경 & 집 아이템 개수 추가
+        background_items = self.backgrounds.values("name").annotate(count=models.Count("name"))
+        house_items = self.houses.values("name").annotate(count=models.Count("name"))
+
+        inventory_data["backgrounds"] = {item["name"]: item["count"] for item in background_items}
+        inventory_data["houses"] = {item["name"]: item["count"] for item in house_items}
+
+        return inventory_data
 
 
     def feed_pet(self, pet):

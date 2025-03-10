@@ -41,3 +41,12 @@ def buy_item(request):
         return JsonResponse({"error": message}, status=400)
 
     return JsonResponse({"error": "잘못된 요청입니다"}, status=400)
+
+
+@login_required
+def get_items(request):
+    """
+    ✅ 모든 아이템 목록을 반환하는 API
+    """
+    items = Item.objects.all().values("name", "category", "price")
+    return JsonResponse(list(items), safe=False)
