@@ -129,37 +129,54 @@ class Pet(models.Model):
         chosen_breed = random.choice(cls.PET_TYPES[chosen_type])
         return chosen_type, chosen_breed
 
-    def feed_pet(self, inventory):
-        """ ✅ 사료 또는 물 사용 시 체력 회복 """
-        if inventory.pm_feed > 0:
-            self.health = min(self.health + 20, 300)  # 프리미엄 사료 체력 +20
-            inventory.pm_feed -= 1
-        elif inventory.feed > 0:
-            self.health = min(self.health + 10, 300)  # 일반 사료 체력 +10
-            inventory.feed -= 1
-        else:
-            return False, "사료가 부족합니다."
 
+    def feed_pet(self, inventory, feed_type="feed"):
+        """ ✅ 사료를 주면 체력 회복 및 경험치 증가 """
+        if feed_type not in ["feed", "pm_feed"]:
+            return False, "잘못된 사료 유형입니다."
+        if getattr(inventory, feed_type) <= 0:
+            return False, f"{feed_type}이 부족합니다."
+        if self.health < 30:
+            return False, "펫의 체력이 너무 낮아 사료를 먹을 수 없습니다."
+
+        health_gain = 10 if feed_type == "feed" else 30
+        exp_gain = 0 if feed_type == "feed" else 5  # ✅ 일반 사료 경험치 0, 프리미엄 사료 경험치 5
+
+        self.health = min(self.health + health_gain, 300)
+        setattr(inventory, feed_type, getattr(inventory, feed_type) - 1)  # ✅ 사료 개수 감소
         inventory.save()
-        self.save()
-        return True, "펫이 사료를 먹었습니다!"
+        self.gain_experience(exp_gain)  # ✅ 경험치 증가 반영
+        return True, f"{feed_type}을(를) 먹였습니다! (+{health_gain} 체력, +{exp_gain} 경험치)"
 
 
-    def give_water(self, inventory):
-        """ ✅ 물 사용 시 체력 회복 """
-        if inventory.pm_water > 0:
-            self.health = min(self.health + 50, 300)  # 프리미엄 물 체력 +50
-            inventory.pm_water -= 1
-        elif inventory.water > 0:
-            self.health = min(self.health + 30, 300)  # 일반 물 체력 +30
-            inventory.water -= 1
-        else:
-            return False, "물이 부족합니다."
+    def give_water(self, inventory, water_type="water"):
+        """ ✅ 물을 주면 체력 회복 및 경험치 증가 """
+        if water_type not in ["water", "pm_water"]:
+            return False, "잘못된 물 유형입니다."
+        if getattr(inventory, water_type) <= 0:
+            return False, f"{water_type}이 부족합니다."
 
+        now = timezone.now()
+        last_given = inventory.last_water
+
+        if last_given:
+            if last_given.date() == now.date():
+                if last_given.hour < 12 and now.hour < 12:
+                    return False, "오늘 오전에 이미 물을 주었습니다."
+                elif last_given.hour >= 12 and now.hour >= 12:
+                    return False, "오늘 오후에 이미 물을 주었습니다."
+
+        health_gain = 30 if water_type == "water" else 60
+        exp_gain = 0 if water_type == "water" else 10  # ✅ 일반 물 경험치 0, 프리미엄 물 경험치 10
+
+        self.health = min(self.health + health_gain, 300)
+        setattr(inventory, water_type, getattr(inventory, water_type) - 1)  # ✅ 물 개수 감소
+        inventory.last_water = now
         inventory.save()
-        self.save()
-        return True, "펫이 물을 마셨습니다!"
-    
+        self.gain_experience(exp_gain)  # ✅ 경험치 증가 반영
+        return True, f"{water_type}을(를) 마셨습니다! (+{health_gain} 체력, +{exp_gain} 경험치)"
+
+
 
     def gain_experience(self, exp_gain):
         """ ✅ 경험치 증가 및 자동 레벨업 """
@@ -189,21 +206,18 @@ class Pet(models.Model):
         """ ✅ 장난감 사용 시 경험치 증가 및 체력 감소 """
         if toy_type not in ["toy1", "toy2", "toy3"]:
             return False, "잘못된 장난감 유형입니다."
-
         if getattr(inventory, toy_type) <= 0:
             return False, f"{toy_type}이 부족합니다."
-
         if self.health <= 0:
             return False, "펫의 체력이 부족합니다."
 
-        exp_gain = max(10 - (self.level - 1), 1)
-        self.health = max(self.health - 5, 0)
-        setattr(inventory, toy_type, getattr(inventory, toy_type) - 1)
+        exp_gain = max(10 - (self.level - 1), 1)  # ✅ 레벨이 높을수록 경험치 감소
+        self.health = max(self.health - 5, 0)  # ✅ 체력 소모
+        setattr(inventory, toy_type, getattr(inventory, toy_type) - 1)  # ✅ 장난감 개수 감소
         inventory.save()
 
         return self.gain_experience(exp_gain), "펫이 장난감으로 놀았습니다!"
-    
-    
+
 
 
     def level_up(self):

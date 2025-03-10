@@ -91,36 +91,43 @@ class Inventory(models.Model):
         return inventory_data
 
 
-    def feed_pet(self, pet):
+    def feed_pet(self, pet, feed_type="feed"):
         """
         사료를 주면 펫의 체력이 회복됩니다.
-        - 사료 1개당 체력 +10 (최대 300까지)
-        - 체력이 300이면 추가 회복 없음
-        - 체력이 30 이상이어야 사료를 줄 수 있음
+        - 일반 사료(feed): 체력 +10, 경험치 +0
+        - 프리미엄 사료(pm_feed): 체력 +30, 경험치 +5
+        - 체력이 30 미만이면 먹을 수 없음
         """
         now = timezone.now()
 
         if pet.health < 30:
             return False, "펫의 체력이 너무 낮아 사료를 먹을 수 없습니다."
-        if self.feed <= 0:
-            return False, "사료가 부족합니다."
+        if feed_type not in ["feed", "pm_feed"]:
+            return False, "잘못된 사료 유형입니다."
+        if getattr(self, feed_type) <= 0:
+            return False, f"{feed_type}이 부족합니다."
 
-        # 체력 회복 (300 이상 증가하지 않음)
-        pet.health = min(pet.health + 10, 300)
+        # 경험치 증가 없음 (일반 사료) / 경험치 증가 (프리미엄 사료)
+        health_gain = 10 if feed_type == "feed" else 30
+        exp_gain = 0 if feed_type == "feed" else 5  # ✅ 일반 사료 경험치 0, 프리미엄 사료 경험치 5
 
-        self.feed -= 1
+        pet.health = min(pet.health + health_gain, 300)
+        pet.experience += exp_gain  
+
+        setattr(self, feed_type, getattr(self, feed_type) - 1)  # 사료 개수 감소
         self.last_fed = now
         self.save()
         pet.save()
-        return True, "펫에게 사료를 줬습니다!"
 
-    def give_water(self, pet):
+        return True, f"{feed_type}을(를) 먹였습니다! (+{health_gain} 체력, +{exp_gain} 경험치)"
+
+
+    def give_water(self, pet, water_type="water"):
         """
         물을 주면 펫의 체력이 회복됩니다.
-        - 물 1개당 체력 +30 (최대 300까지)
-        - 체력이 300이면 추가 회복 없음
-        - 물은 오전(00:00~11:59)와 오후(12:00~23:59) 각각 한 번만 줄 수 있음
-        - 체력이 30 이상이어야 물을 줄 수 있음
+        - 일반 물(water): 체력 +30, 경험치 +0
+        - 프리미엄 물(pm_water): 체력 +60, 경험치 +10
+        - 오전/오후 각각 한 번만 줄 수 있음
         """
         now = timezone.now()
         current_hour = now.hour
@@ -133,14 +140,21 @@ class Inventory(models.Model):
                 elif last_given.hour >= 12 and current_hour >= 12:
                     return False, "오늘 오후에 이미 물을 주었습니다."
 
-        if self.water <= 0:
-            return False, "물이 부족합니다."
+        if water_type not in ["water", "pm_water"]:
+            return False, "잘못된 물 유형입니다."
+        if getattr(self, water_type) <= 0:
+            return False, f"{water_type}이 부족합니다."
 
-        # 체력 회복 (300 이상 증가하지 않음)
-        pet.health = min(pet.health + 30, 300)
+        # 경험치 증가 없음 (일반 물) / 경험치 증가 (프리미엄 물)
+        health_gain = 30 if water_type == "water" else 60
+        exp_gain = 0 if water_type == "water" else 10  # ✅ 일반 물 경험치 0, 프리미엄 물 경험치 10
 
-        self.water -= 1
+        pet.health = min(pet.health + health_gain, 300)
+        pet.experience += exp_gain  
+
+        setattr(self, water_type, getattr(self, water_type) - 1)  # 물 개수 감소
         self.last_water = now
         self.save()
         pet.save()
-        return True, "펫에게 물을 줬습니다!"
+
+        return True, f"{water_type}을(를) 마셨습니다! (+{health_gain} 체력, +{exp_gain} 경험치)"
