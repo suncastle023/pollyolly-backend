@@ -11,13 +11,22 @@ class BuyItemAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        item_type = request.data.get("item_type")
+        item_name = request.data.get("item_name")
+        quantity = int(request.data.get("quantity", 1))
         coin = Coin.objects.get(user=request.user)
         inventory, _ = Inventory.objects.get_or_create(user=request.user)
-        
-        if inventory.buy_item(item_type, coin):
-            return Response({"message": f"{item_type} 구매 완료!"})
-        return Response({"message": "코인이 부족합니다."}, status=400)
+
+        success, message = inventory.buy_item(item_name, coin, quantity)
+
+        if success:
+            return Response({
+                "success": True,
+                "message": message,
+                "remaining_coins": coin.amount,
+                "inventory": inventory.get_inventory_status()
+            })
+        return Response({"success": False, "message": message}, status=400)
+
 
 class FeedPetAPIView(APIView):
     permission_classes = [IsAuthenticated]

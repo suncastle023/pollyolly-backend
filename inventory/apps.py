@@ -5,4 +5,4 @@ class InventoryConfig(AppConfig):
     name = "inventory"
 
     def ready(self):
-        import inventory.signals  # ✅ signals 등록
+        import inventory.signals  
