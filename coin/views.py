@@ -21,9 +21,9 @@ class StepRewardAPIView(APIView):
             "coins": coin.amount,  
             "pending_coins": coin.pending_coins,
             "pending_feed": coin.pending_feed,
-            "pending_toy": coin.pending_toy,
-    
+            "pending_toy1": coin.pending_toy1,  
         })
+    
     def post(self, request):
         if not request.user.is_authenticated:
             return Response({"error": "User is not authenticated"}, status=status.HTTP_403_FORBIDDEN)
@@ -39,7 +39,7 @@ class StepRewardAPIView(APIView):
             coin.last_rewarded_steps = 0
             coin.last_reward_date = today
 
-        # add_coins 내부에서 pending 코인이 올바르게 누적되고 저장됨
+
         coin.add_coins(steps)
         coin.save()
 
@@ -47,11 +47,11 @@ class StepRewardAPIView(APIView):
             "coins": coin.amount,
             "pending_coins": coin.pending_coins,
             "pending_feed": coin.pending_feed,
-            "pending_toy": coin.pending_toy,
+            "pending_toy1": coin.pending_toy1,
             "message": "Pending rewards are updated. Press the coin button to claim rewards."
         })
 
-    
+
 class ClaimCoinAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -61,50 +61,44 @@ class ClaimCoinAPIView(APIView):
 
         coin, _ = Coin.objects.get_or_create(user=request.user)
 
-        # ✅ `pending_rewards`가 None이거나 리스트가 아니면 초기화
         if not isinstance(coin.pending_rewards, list):
             coin.pending_rewards = []
 
-        # ✅ 데이터 불일치 확인 및 자동 수정
+
         if len(coin.pending_rewards) != coin.pending_coins:
             logger.warning(f"⚠️ {coin.user}의 보류 코인({coin.pending_coins})과 보류 보상({len(coin.pending_rewards)}) 불일치 감지")
             
             if len(coin.pending_rewards) < coin.pending_coins:
-                # 부족한 경우 빈 보상 추가
-                missing_rewards = [{"feed": 0, "toy": 0} for _ in range(coin.pending_coins - len(coin.pending_rewards))]
+                missing_rewards = [{"feed": 0, "toy1": 0} for _ in range(coin.pending_coins - len(coin.pending_rewards))]
                 coin.pending_rewards.extend(missing_rewards)
             else:
-                # 너무 많은 경우 초과된 부분 제거
                 coin.pending_rewards = coin.pending_rewards[:coin.pending_coins]
 
             coin.save()
 
-          # 보류된 코인과 보상이 있는 경우만 처리
         if coin.pending_coins > 0 and coin.pending_rewards:
-            reward = coin.pending_rewards.pop(0)  # 첫 번째 보상 제거
+            reward = coin.pending_rewards.pop(0) 
 
             coin.amount += 1  
             coin.pending_coins -= 1
 
             feed_bonus = reward.get("feed", 0)
-            toy_bonus = reward.get("toy", 0)
+            toy1_bonus = reward.get("toy1", 0) 
 
-            # 🛠 보상이 적용되지 않는 문제 해결 → 정확하게 감소시키기
             if coin.pending_feed >= feed_bonus:
                 coin.pending_feed -= feed_bonus
             else:
-                feed_bonus = 0  # 데이터가 불일치할 경우 보정
+                feed_bonus = 0 
 
-            if coin.pending_toy >= toy_bonus:
-                coin.pending_toy -= toy_bonus
+            if coin.pending_toy1 >= toy1_bonus:
+                coin.pending_toy1 -= toy1_bonus
             else:
-                toy_bonus = 0  # 데이터가 불일치할 경우 보정
+                toy_bonus = 0  
 
-            # 인벤토리 업데이트
-            from inventory.models import Inventory
+
             inventory, _ = Inventory.objects.get_or_create(user=request.user)
             inventory.feed += feed_bonus
-            inventory.toy += toy_bonus
+            inventory.toy1 += toy_bonus 
             inventory.save()
 
             coin.save()
@@ -113,21 +107,25 @@ class ClaimCoinAPIView(APIView):
                 "message": "1 reward claimed successfully",
                 "claimed_coin": 1,
                 "claimed_feed": feed_bonus,
-                "claimed_toy": toy_bonus,
+                "claimed_toy1": toy_bonus, 
                 "total_coins": coin.amount,
                 "pending_coins": coin.pending_coins,
                 "pending_feed": coin.pending_feed,
-                "pending_toy": coin.pending_toy,
+                "pending_toy1": coin.pending_toy1, 
                 "total_feed": inventory.feed,
-                "total_toy": inventory.toy,
+                "total_toy1": inventory.toy1,  
             })
         else:
             return Response({"message": "No rewards to claim"}, status=status.HTTP_400_BAD_REQUEST)
-        
 
 
-#유저의 현재 코인 잔액을 반환하는 API
+# ✅ 유저의 현재 코인 잔액을 반환하는 API
 @login_required
 def get_user_coins(request):
     coin = get_object_or_404(Coin, user=request.user)
-    return JsonResponse({"coins": coin.amount})
+    return JsonResponse({
+        "coins": coin.amount,
+        "pending_coins": coin.pending_coins,
+        "pending_feed": coin.pending_feed,
+        "pending_toy1": coin.pending_toy1, 
+    })
