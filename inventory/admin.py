@@ -3,7 +3,7 @@ from .models import Inventory
 
 @admin.register(Inventory)
 class InventoryAdmin(admin.ModelAdmin):
-    list_display = ("user", "feed", "water", "toy", "last_fed", "last_water")
+    list_display = ("user", "feed", "pm_feed", "water", "pm_water", "toy1", "toy2", "toy3", "last_fed", "last_water")
     list_filter = ("last_fed", "last_water")
     search_fields = ("user__email", "user__username")
     readonly_fields = ("last_fed", "last_water")
@@ -13,5 +13,3 @@ class InventoryAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return []  # 슈퍼유저는 모든 필드를 수정 가능
         return self.readonly_fields
-
-

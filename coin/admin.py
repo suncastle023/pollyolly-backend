@@ -13,11 +13,11 @@ class CoinAdmin(admin.ModelAdmin):
         "amount",
         "pending_coins",
         "pending_feed",
-        "pending_toy",
-        "total_pending_rewards",  # ✅ 보류 보상 개수 한눈에 보기
+        "pending_toy1",  # ✅ toy → toy1으로 변경
+        "total_pending_rewards",
         "last_rewarded_steps",
         "last_reward_date",
-        "clear_rewards_button",  # ✅ 보류 보상을 초기화하는 버튼 추가
+        "clear_rewards_button",
     )
 
     list_filter = ("last_reward_date",)
@@ -25,11 +25,10 @@ class CoinAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("유저 정보", {"fields": ("user",)}),
-        ("코인 정보", {"fields": ("amount", "pending_coins", "pending_feed", "pending_toy")}),
+        ("코인 정보", {"fields": ("amount", "pending_coins", "pending_feed", "pending_toy1")} ),  # ✅ toy → toy1 변경
         ("보상 기록", {"fields": ("last_rewarded_steps", "last_reward_date")}),
     )
 
-    # ✅ readonly_fields에만 추가 (fieldsets에서 제거)
     readonly_fields = ("display_pending_rewards",)
 
     def total_pending_rewards(self, obj):
@@ -45,7 +44,7 @@ class CoinAdmin(admin.ModelAdmin):
 
         formatted_rewards = "<ul>"
         for i, reward in enumerate(obj.pending_rewards):
-            formatted_rewards += f"<li>🆕 {i+1}번째 보상 - Feed: {reward.get('feed', 0)}, Toy: {reward.get('toy', 0)}</li>"
+            formatted_rewards += f"<li>🆕 {i+1}번째 보상 - Feed: {reward.get('feed', 0)}, Toy1: {reward.get('toy1', 0)}</li>"  # ✅ toy → toy1 변경
         formatted_rewards += "</ul>"
 
         return mark_safe(formatted_rewards)
@@ -64,14 +63,14 @@ class CoinAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         """슈퍼유저는 모든 필드를 수정 가능, 일반 유저는 일부 필드만 읽기 전용"""
         if request.user.is_superuser:
-            return []  # ✅ 슈퍼유저는 모든 필드를 수정 가능
+            return []  
         return (
             "pending_coins",
             "pending_feed",
-            "pending_toy",
+            "pending_toy1",  # ✅ toy → toy1 변경
             "last_rewarded_steps",
             "last_reward_date",
-            "display_pending_rewards",  # ✅ readonly_fields에만 유지
+            "display_pending_rewards",
         )
 
     def get_urls(self):
@@ -87,7 +86,7 @@ class CoinAdmin(admin.ModelAdmin):
         coin = Coin.objects.get(pk=coin_id)
         coin.pending_coins = 0
         coin.pending_feed = 0
-        coin.pending_toy = 0
+        coin.pending_toy1 = 0  # ✅ toy → toy1 변경
         coin.pending_rewards = []
         coin.save()
 
