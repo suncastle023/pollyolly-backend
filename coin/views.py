@@ -92,6 +92,7 @@ class ClaimCoinAPIView(APIView):
 
             if coin.pending_toy1 >= toy1_bonus:
                 coin.pending_toy1 -= toy1_bonus
+                toy_bonus = toy1_bonus 
             else:
                 toy_bonus = 0  
 
