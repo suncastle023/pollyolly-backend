@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import BuyItemAPIView, FeedPetAPIView, GiveWaterAPIView, PlayWithToyAPIView, GetInventoryAPIView
+from .views import BuyItemAPIView, FeedPetAPIView, GiveWaterAPIView, PlayWithToyAPIView, GetInventoryAPIView, refund_item_admin
 
 app_name = 'inventory'
 
@@ -9,4 +9,5 @@ urlpatterns = [
     path("water/", GiveWaterAPIView.as_view(), name="give_water"),  # 일반 & 프리미엄 물 포함
     path("play/", PlayWithToyAPIView.as_view(), name="play_with_toy"),  # 장난감 종류별 구분
     path("get-inventory/", GetInventoryAPIView.as_view(), name="get_inventory"),
+      path("refund/admin/", refund_item_admin, name="refund_item_admin"),
 ]

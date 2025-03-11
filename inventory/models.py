@@ -80,7 +80,8 @@ class Inventory(models.Model):
 
     #환불 로직
     def refund_item(self, item_name):
-        from coin.models import Coin 
+        """ 특정 아이템을 환불하여 유저에게 코인을 돌려줌 """
+        from coin.models import Coin  
 
         if item_name not in self.purchased_items:
             return False, "환불할 아이템이 없습니다."
@@ -97,7 +98,15 @@ class Inventory(models.Model):
         del self.purchased_items[item_name]
         self.save()
 
+        # ✅ ManyToManyField에서 아이템 제거
+        if item.category == "background":
+            self.backgrounds.remove(item)
+        elif item.category == "house":
+            self.houses.remove(item)
+
         return True, f"{item_name}을(를) 환불하였습니다."
+
+
 
     #인벤토리 상태 반환
     def get_inventory_status(self):
