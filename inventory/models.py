@@ -19,13 +19,16 @@ class Inventory(models.Model):
     backgrounds = models.ManyToManyField(Item, related_name="user_backgrounds", blank=True)
     houses = models.ManyToManyField(Item, related_name="user_houses", blank=True)
 
+     # 새로 구매한 아이템을 저장하는 JSONField
+    purchased_items = models.JSONField(default=dict, blank=True)  
+
     # 마지막 지급 시간
     last_fed = models.DateTimeField(null=True, blank=True)
     last_water = models.DateTimeField(null=True, blank=True)
 
     def buy_item(self, item_name, coin, quantity=1):
         """
-        ✅ 아이템 구매 로직
+        아이템 구매 로직
         - 일반 & 프리미엄 사료/물/장난감 개수 증가
         - 배경 & 집 아이템도 개수 증가
         """
@@ -59,17 +62,45 @@ class Inventory(models.Model):
             else:
                 self.houses.add(item)
 
+        # 구매한 아이템 JSONField에 저장
+        purchased_items = self.purchased_items
+        if item.name in purchased_items:
+            purchased_items[item.name] += quantity
+        else:
+            purchased_items[item.name] = quantity
+        
+        self.purchased_items = purchased_items
+
+
         # 코인 차감 및 저장
         coin.amount -= total_price
         coin.save()
         self.save()
         return True, f"{item.name}을(를) {quantity}개 구매했습니다!"
 
+    #환불 로직
+    def refund_item(self, item_name):
+        from coin.models import Coin 
 
+        if item_name not in self.purchased_items:
+            return False, "환불할 아이템이 없습니다."
+
+        item = Item.objects.filter(name=item_name).first()
+        if not item:
+            return False, "잘못된 아이템입니다."
+
+        coin = Coin.objects.get(user=self.user)
+        refund_amount = item.price * self.purchased_items[item_name]
+        coin.amount += refund_amount
+        coin.save()
+
+        del self.purchased_items[item_name]
+        self.save()
+
+        return True, f"{item_name}을(를) 환불하였습니다."
+
+    #인벤토리 상태 반환
     def get_inventory_status(self):
-        """
-        ✅ 인벤토리 상태 반환 (일반 아이템 + 배경/집 아이템 개수 포함)
-        """
         # 일반 아이템 개수
         inventory_data = {
             "feed": self.feed,
@@ -79,6 +110,7 @@ class Inventory(models.Model):
             "toy3": self.toy3,
             "water": self.water,
             "pm_water": self.pm_water,
+            "purchased_items": self.purchased_items,
         }
 
         # 배경 & 집 아이템 개수 추가
@@ -89,6 +121,8 @@ class Inventory(models.Model):
         inventory_data["houses"] = {item["name"]: item["count"] for item in house_items}
 
         return inventory_data
+    def __str__(self):
+        return f"{self.user.username}의 인벤토리"
 
 
     def feed_pet(self, pet, feed_type="feed"):
