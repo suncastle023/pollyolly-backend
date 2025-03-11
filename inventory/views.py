@@ -12,27 +12,6 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 import json
 from accounts.models import CustomUser 
 
-class BuyItemAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        item_name = request.data.get("item_name")
-        quantity = int(request.data.get("quantity", 1))
-        coin = Coin.objects.get(user=request.user)
-        inventory, _ = Inventory.objects.get_or_create(user=request.user)
-
-        success, message = inventory.buy_item(item_name, coin, quantity)
-
-        if success:
-            return Response({
-                "success": True,
-                "message": message,
-                "remaining_coins": coin.amount,
-                "inventory": inventory.get_inventory_status()
-            })
-        return Response({"success": False, "message": message}, status=400)
-
-
 class FeedPetAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -118,38 +97,3 @@ class GetInventoryAPIView(APIView):
         inventory, _ = Inventory.objects.get_or_create(user=request.user)
         return Response(inventory.get_inventory_status())
 
-
-def is_admin(user):
-    """ 관리자 여부 확인 """
-    return user.is_staff or user.is_superuser
-
-@login_required
-@user_passes_test(is_admin)  # ✅ 관리자만 접근 가능하도록 제한
-def refund_item_admin(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            user_email = data.get("user_email")
-            item_name = data.get("item_name")
-
-            if not user_email or not item_name:
-                return JsonResponse({"error": "유저 이메일과 아이템을 입력하세요."}, status=400)
-
-            # ✅ 이메일을 기준으로 유저 찾기
-            user = get_object_or_404(CustomUser, email=user_email)
-            inventory = get_object_or_404(Inventory, user=user)
-
-            success, message = inventory.refund_item(item_name)
-
-            if success:
-                return JsonResponse({
-                    "message": f"{user.nickname or user.email}의 {item_name} 환불 완료!"
-                })
-            return JsonResponse({"error": message}, status=400)
-
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
-        except Exception as e:
-            return JsonResponse({"error": f"서버 오류: {str(e)}"}, status=500)
-
-    return JsonResponse({"error": "잘못된 요청입니다."}, status=400)

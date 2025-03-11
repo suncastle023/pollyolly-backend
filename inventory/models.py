@@ -29,8 +29,9 @@ class Inventory(models.Model):
     def buy_item(self, item_name, coin, quantity=1):
         """
         아이템 구매 로직
-        - 일반 & 프리미엄 사료/물/장난감 개수 증가
-        - 배경 & 집 아이템도 개수 증가
+        - 일반/프리미엄 사료, 물, 장난감 개수 증가
+        - 배경/집 아이템은 ManyToManyField로 관리
+        - 구매한 아이템은 purchased_items(JSONField)에 저장
         """
         item = Item.objects.filter(name=item_name).first()
         if not item:
@@ -41,25 +42,15 @@ class Inventory(models.Model):
             return False, f"코인이 부족합니다. 최대 {coin.amount // item.price}개까지 구매 가능합니다."
 
         # 카테고리별 처리
-        if item.name in ["feed", "pm_feed"]:
-            setattr(self, item.name, getattr(self, item.name, 0) + quantity)
-        elif item.name in ["toy1", "toy2", "toy3"]:
-            setattr(self, item.name, getattr(self, item.name, 0) + quantity)
-        elif item.name in ["water", "pm_water"]:
+        if item.name in ["feed", "pm_feed", "toy1", "toy2", "toy3", "water", "pm_water"]:
             setattr(self, item.name, getattr(self, item.name, 0) + quantity)
         elif item.category == "background":
-            # ✅ 배경 중복 구매 시 개수 증가
-            if self.backgrounds.filter(name=item.name).exists():
-                pass  # 이미 존재하면 개수만 증가 (ManyToManyField 자체는 중복 불가)
-            else:
-                self.backgrounds.add(item)  # 없으면 추가
+            if not self.backgrounds.filter(name=item.name).exists():
+                self.backgrounds.add(item)
         elif item.category == "house":
             if item.name == "cat_tower" and not self.user.has_cat():
                 return False, "캣타워는 고양이 전용입니다."
-            # ✅ 집 중복 구매 시 개수 증가
-            if self.houses.filter(name=item.name).exists():
-                pass
-            else:
+            if not self.houses.filter(name=item.name).exists():
                 self.houses.add(item)
 
         # 구매한 아이템 JSONField에 저장
@@ -68,9 +59,7 @@ class Inventory(models.Model):
             purchased_items[item.name] += quantity
         else:
             purchased_items[item.name] = quantity
-        
         self.purchased_items = purchased_items
-
 
         # 코인 차감 및 저장
         coin.amount -= total_price
@@ -78,10 +67,17 @@ class Inventory(models.Model):
         self.save()
         return True, f"{item.name}을(를) {quantity}개 구매했습니다!"
 
-    #환불 로직
-    def refund_item(self, item_name):
-        """ 특정 아이템을 환불하여 유저에게 코인을 돌려줌 """
-        from coin.models import Coin  
+
+
+    def refund_item(self, item_name, quantity=None):
+        """
+        환불 로직
+        - 특정 아이템에 대해(전체 또는 부분) 환불 진행
+        - 환불 금액 = 아이템 가격 * 환불 수량
+        - 코인 반환 후, purchased_items 업데이트
+        - 배경/집 아이템인 경우 ManyToManyField에서도 제거
+        """
+        from coin.models import Coin  # 순환 참조 방지
 
         if item_name not in self.purchased_items:
             return False, "환불할 아이템이 없습니다."
@@ -90,22 +86,29 @@ class Inventory(models.Model):
         if not item:
             return False, "잘못된 아이템입니다."
 
+        current_quantity = self.purchased_items[item_name]
+        if quantity is None:
+            quantity = current_quantity
+        elif quantity > current_quantity:
+            return False, f"환불 수량({quantity})이 구매 수량({current_quantity})보다 많습니다."
+
         coin = Coin.objects.get(user=self.user)
-        refund_amount = item.price * self.purchased_items[item_name]
+        refund_amount = item.price * quantity
         coin.amount += refund_amount
         coin.save()
 
-        del self.purchased_items[item_name]
+        new_quantity = current_quantity - quantity
+        if new_quantity <= 0:
+            del self.purchased_items[item_name]
+            if item.category == "background":
+                self.backgrounds.remove(item)
+            elif item.category == "house":
+                self.houses.remove(item)
+        else:
+            self.purchased_items[item_name] = new_quantity
         self.save()
 
-        # ✅ ManyToManyField에서 아이템 제거
-        if item.category == "background":
-            self.backgrounds.remove(item)
-        elif item.category == "house":
-            self.houses.remove(item)
-
-        return True, f"{item_name}을(를) 환불하였습니다."
-
+        return True, f"{quantity}개 환불되었습니다. (환불 금액: {refund_amount} 코인)"
 
 
     #인벤토리 상태 반환

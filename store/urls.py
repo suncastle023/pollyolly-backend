@@ -1,7 +1,9 @@
+# store/urls.py
 from django.urls import path
-from .views import buy_item, get_items
+from .views import BuyItemAPIView, get_items, refund_item_admin
 
 urlpatterns = [
-    path("buy/", buy_item, name="buy_item"),
-    path("items/", get_items, name="get_items"),  # 🔹 모든 아이템 가져오기 API 추가
+    path('buy/', BuyItemAPIView.as_view(), name='buy_item'),
+    path('items/', get_items, name='get_items'),
+    path('refund/admin/', refund_item_admin, name='refund_item_admin'),
 ]

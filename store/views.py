@@ -1,64 +1,91 @@
-from django.shortcuts import get_object_or_404
+# store/views.py
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-import json
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from inventory.models import Inventory
 from coin.models import Coin
-from store.models import Item  
+from store.models import Item
+import json
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+
+
+class BuyItemAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        item_name = request.data.get("item_name")
+        try:
+            quantity = int(request.data.get("quantity", 1))
+        except (ValueError, TypeError):
+            quantity = 1
+
+        # 기본 비즈니스 로직: Inventory의 buy_item() 호출
+        coin = Coin.objects.get(user=request.user)
+        inventory, _ = Inventory.objects.get_or_create(user=request.user)
+
+        success, message = inventory.buy_item(item_name, coin, quantity)
+
+        if success:
+            return Response({
+                "success": True,
+                "message": message,
+                "remaining_coins": coin.amount,
+                "inventory": inventory.get_inventory_status()
+            })
+        return Response({"success": False, "message": message}, status=400)
+
+def is_admin(user):
+    return user.is_staff or user.is_superuser
 
 @login_required
-def buy_item(request):
+@user_passes_test(is_admin)
+def refund_item_admin(request):
+    """
+    관리자 전용 API: 특정 유저의 특정 아이템 환불
+    요청 JSON 예시:
+    {
+        "user_email": "test@example.com",
+        "item_name": "default_bg2",
+        "quantity": 1  # (옵션, 미입력 시 전체 환불)
+    }
+    """
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            user = request.user
-            user_display_name = user.nickname or user.email  # ✅ 닉네임이 없으면 이메일 사용
+            user_email = data.get("user_email")
             item_name = data.get("item_name")
-            quantity = data.get("quantity", 1)  # 기본값 1
+            quantity = data.get("quantity")  # 선택적; 미입력 시 전체 환불
 
-            if not item_name:
-                return JsonResponse({"error": "아이템을 선택하세요"}, status=400)
+            if not user_email or not item_name:
+                return JsonResponse({"error": "유저 이메일과 아이템 이름을 입력하세요."}, status=400)
 
-            item = get_object_or_404(Item, name=item_name)  # 아이템 가져오기
-            coin = get_object_or_404(Coin, user=user)  # 유저 코인 가져오기
-            inventory, created = Inventory.objects.get_or_create(user=user)  # 인벤토리 가져오기 (없으면 생성)
+            User = get_user_model()
+            user = get_object_or_404(User, email=user_email)
+            inventory = get_object_or_404(Inventory, user=user)
 
-            # ✅ 새 인벤토리가 생성된 경우 초기 설정 (예: 기본 아이템 지급)
-            if created:
-                print(f"[새 인벤토리 생성] {user_display_name}의 인벤토리 초기화 완료")
-                inventory.feed = 5
-                inventory.water = 5
-                inventory.save()
+            # 환불 요청: quantity가 주어지면 정수로 변환, 없으면 None(전체 환불)
+            if quantity is not None:
+                try:
+                    quantity = int(quantity)
+                except ValueError:
+                    return JsonResponse({"error": "환불 수량은 정수여야 합니다."}, status=400)
 
-            print(f"🔹 [구매 요청] 유저: {user_display_name}, 아이템: {item_name}, 개수: {quantity}")
-            print(f"🔹 [잔여 코인] {coin.amount} → 필요 코인: {item.price * quantity}")
-
-            total_price = item.price * quantity
-            if coin.amount < total_price:
-                return JsonResponse({"error": "코인이 부족합니다"}, status=400)
-
-            # ✅ 코인 차감
-            coin.amount -= total_price
-            coin.save()
-
-            success, message = inventory.buy_item(item_name, coin, quantity)
-
+            success, message = inventory.refund_item(item_name, quantity=quantity)
             if success:
-                print(f"✅ [구매 완료] {item_name} {quantity}개")
                 return JsonResponse({
-                    "message": message,
-                    "remaining_coins": coin.amount,
-                    "inventory": inventory.get_inventory_status()  # ✅ 인벤토리 상태 반환
+                    "message": f"{user.nickname or user.email}의 {item_name} 환불 완료! {message}"
                 })
             return JsonResponse({"error": message}, status=400)
 
         except json.JSONDecodeError:
-            return JsonResponse({"error": "잘못된 JSON 형식입니다"}, status=400)
+            return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
         except Exception as e:
-            print(f"❌ [오류 발생] {str(e)}")
             return JsonResponse({"error": f"서버 오류: {str(e)}"}, status=500)
 
-    return JsonResponse({"error": "잘못된 요청입니다"}, status=400)
+    return JsonResponse({"error": "잘못된 요청입니다."}, status=400)
 
 
 #아이템 목록 반환 api
