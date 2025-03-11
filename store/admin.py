@@ -5,65 +5,49 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse
 from django.middleware.csrf import get_token
+from django.contrib.auth import get_user_model
+from .models import Item
 from inventory.models import Inventory
+from coin.models import Coin
 
-class InventoryAdmin(admin.ModelAdmin):
-    list_display = ("user_email", "user_nickname", "display_purchased_items", "refund_actions")
-    search_fields = ("user__email", "user__nickname")
+class ItemAdmin(admin.ModelAdmin):
+    list_display = ("name", "category", "price", "refund_link")
+    search_fields = ("name", "category")
+    list_filter = ("category",)
+    ordering = ("price",)
 
-    def user_email(self, obj):
-        return obj.user.email
-    user_email.short_description = "이메일"
-
-    def user_nickname(self, obj):
-        return obj.user.nickname or "닉네임 없음"
-    user_nickname.short_description = "닉네임"
-
-    def display_purchased_items(self, obj):
-        if obj.purchased_items:
-            return ", ".join([f"{item}: {qty}개" for item, qty in obj.purchased_items.items()])
-        return "구매한 아이템 없음"
-    display_purchased_items.short_description = "구매한 아이템"
-
-    def refund_actions(self, obj):
-        """
-        각 인벤토리 내 구매한 아이템마다 환불 버튼을 생성합니다.
-        버튼 클릭 시, 해당 아이템에 대해 환불 수량을 입력하는 폼으로 이동합니다.
-        """
-        if not obj.purchased_items:
-            return "환불 없음"
-        links = []
-        for item_name, qty in obj.purchased_items.items():
-            url = reverse("admin:refund_inventory_item", args=[obj.id, item_name])
-            links.append(f'<a href="{url}" class="button">[{item_name}] 환불</a>')
-        return format_html(" ".join(links))
-    refund_actions.short_description = "환불 액션"
+    def refund_link(self, obj):
+        # 환불 버튼을 누르면 해당 Item에 대한 refund_view로 이동
+        url = reverse("admin:store_item_refund", args=[obj.id])
+        return format_html('<a href="{}" class="button">환불</a>', url)
+    refund_link.short_description = "관리자 환불"
 
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
             path(
-                '<int:inventory_id>/refund/<str:item_name>/',
-                self.admin_site.admin_view(self.refund_inventory_item),
-                name='refund_inventory_item'
+                '<int:item_id>/refund/',
+                self.admin_site.admin_view(self.refund_view),
+                name='store_item_refund'
             ),
         ]
-        return custom_urls + urls
+        return urls + custom_urls
 
-    def refund_inventory_item(self, request, inventory_id, item_name):
+    def refund_view(self, request, item_id):
         """
-        해당 인벤토리(유저)의 purchased_items에서 item_name에 해당하는 아이템을 환불합니다.
-        GET: 현재 보유 수량을 보여주는 폼을 렌더링
-        POST: 입력한 환불 수량만큼 환불 진행
-        """
-        inventory = get_object_or_404(Inventory, id=inventory_id)
-        current_quantity = inventory.purchased_items.get(item_name)
-        if not current_quantity:
-            messages.error(request, "환불할 아이템이 없습니다.")
-            return redirect("..")
+        관리자가 특정 Item에 대해, 특정 유저의 Inventory에서 해당 아이템을
+        부분 환불(원하는 수량만큼) 처리할 수 있는 커스텀 뷰.
         
+        GET 요청: 유저 이메일과 환불 수량을 입력할 수 있는 폼 렌더링
+        POST 요청: 입력된 데이터를 바탕으로 환불 처리
+        """
+        item = get_object_or_404(Item, id=item_id)
         if request.method == "POST":
+            user_email = request.POST.get("user_email")
             refund_qty = request.POST.get("refund_qty")
+            if not user_email:
+                messages.error(request, "유저 이메일을 입력하세요.")
+                return redirect(request.path)
             try:
                 refund_qty = int(refund_qty)
             except (ValueError, TypeError):
@@ -72,31 +56,39 @@ class InventoryAdmin(admin.ModelAdmin):
             if refund_qty < 1:
                 messages.error(request, "환불 수량은 1 이상이어야 합니다.")
                 return redirect(request.path)
-            if refund_qty > current_quantity:
-                messages.error(request, f"환불 수량({refund_qty})이 보유 수량({current_quantity})보다 많습니다.")
+            # 유저 조회 (CustomUser는 get_user_model()로 불러옴)
+            User = get_user_model()
+            user = get_object_or_404(User, email=user_email)
+            inventory = get_object_or_404(Inventory, user=user)
+            current_qty = inventory.purchased_items.get(item.name, 0)
+            if refund_qty > current_qty:
+                messages.error(request, f"환불 수량({refund_qty})이 보유 수량({current_qty})보다 많습니다.")
                 return redirect(request.path)
-            
-            success, message_text = inventory.refund_item(item_name, quantity=refund_qty)
+            # Inventory 모델의 refund_item 메서드 호출 (부분 환불)
+            success, refund_message = inventory.refund_item(item.name, quantity=refund_qty)
             if success:
                 messages.success(
-                    request, 
-                    f"{inventory.user.nickname or inventory.user.email}의 {item_name} {refund_qty}개 환불 완료. (환불 금액: {int(message_text.split()[-2])} 코인)"
+                    request,
+                    f"{user.nickname or user.email}의 {item.name} {refund_qty}개 환불 완료. {refund_message}"
                 )
             else:
-                messages.error(request, message_text)
-            return redirect("..")
+                messages.error(request, refund_message)
+            return redirect(reverse("admin:store_item_changelist"))
         else:
             csrf_token = get_token(request)
             form_html = f"""
-            <h2>{inventory.user.nickname or inventory.user.email}의 {item_name} 환불</h2>
-            <p>보유 수량: {current_quantity}개</p>
+            <h2>{item.name} 환불 처리</h2>
             <form method="post">
                 <input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">
+                <label for="user_email">유저 이메일:</label>
+                <input type="email" id="user_email" name="user_email" required>
+                <br><br>
                 <label for="refund_qty">환불 수량:</label>
-                <input type="number" id="refund_qty" name="refund_qty" min="1" max="{current_quantity}" value="1">
-                <button type="submit" class="button">환불하기</button>
+                <input type="number" id="refund_qty" name="refund_qty" min="1" required>
+                <br><br>
+                <button type="submit" class="button">환불 처리</button>
             </form>
             """
             return HttpResponse(form_html)
-        
-        
+
+admin.site.register(Item, ItemAdmin)
