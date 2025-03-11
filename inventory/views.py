@@ -82,7 +82,7 @@ class PlayWithToyAPIView(APIView):
         setattr(inventory, toy_type, getattr(inventory, toy_type) - 1)  # ✅ 해당 장난감 개수 감소
         inventory.save()
 
-        leveled_up = pet.play_with_toy(inventory)
+        leveled_up = pet.play_with_toy(inventory, toy_type)
 
         response_data = {
             "success": True, 
