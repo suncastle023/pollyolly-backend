@@ -203,7 +203,7 @@ class Pet(models.Model):
 
 
     def play_with_toy(self, inventory, toy_type):
-        """ ✅ 장난감 사용 시 경험치 증가 및 체력 감소 """
+        """✅ 장난감 사용 시 경험치 증가 및 체력 감소"""
         if toy_type not in ["toy1", "toy2", "toy3"]:
             return False, "잘못된 장난감 유형입니다."
         if getattr(inventory, toy_type) <= 0:
@@ -211,12 +211,22 @@ class Pet(models.Model):
         if self.health <= 0:
             return False, "펫의 체력이 부족합니다."
 
-        exp_gain = max(10 - (self.level - 1), 1)  # ✅ 레벨이 높을수록 경험치 감소
-        self.health = max(self.health - 5, 0)  # ✅ 체력 소모
-        setattr(inventory, toy_type, getattr(inventory, toy_type) - 1)  # ✅ 장난감 개수 감소
+        # 경험치 증가량: 레벨이 높을수록 경험치 증가량은 줄어듭니다.
+        exp_gain = max(10 - (self.level - 1), 1)
+        # 체력 소모: 5만큼 감소 (최소 0)
+        self.health = max(self.health - 5, 0)
+        # 장난감 개수 감소 후 저장
+        setattr(inventory, toy_type, getattr(inventory, toy_type) - 1)
         inventory.save()
 
-        return self.gain_experience(exp_gain), "펫이 장난감으로 놀았습니다!"
+        # 경험치 증가 및 레벨업 여부 판단
+        leveled_up = self.gain_experience(exp_gain)
+        if leveled_up:
+            message = f"🎉 {self.name}의 레벨이 {self.level}이 되었습니다! 축하합니다!"
+        else:
+            message = "펫이 장난감으로 놀았습니다!"
+
+        return leveled_up, message
 
 
 
