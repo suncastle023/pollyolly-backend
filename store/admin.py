@@ -5,7 +5,7 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.http import HttpResponse
 from django.middleware.csrf import get_token
-from .models import Inventory
+from inventory.models import Inventory
 
 class InventoryAdmin(admin.ModelAdmin):
     list_display = ("user_email", "user_nickname", "display_purchased_items", "refund_actions")
