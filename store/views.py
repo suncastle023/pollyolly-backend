@@ -12,6 +12,7 @@ def buy_item(request):
         try:
             data = json.loads(request.body)
             user = request.user
+            user_display_name = user.nickname or user.email  # ✅ 닉네임이 없으면 이메일 사용
             item_name = data.get("item_name")
             quantity = data.get("quantity", 1)  # 기본값 1
 
@@ -24,12 +25,12 @@ def buy_item(request):
 
             # ✅ 새 인벤토리가 생성된 경우 초기 설정 (예: 기본 아이템 지급)
             if created:
-                print(f"[새 인벤토리 생성] {user.username}의 인벤토리 초기화 완료")
+                print(f"[새 인벤토리 생성] {user_display_name}의 인벤토리 초기화 완료")
                 inventory.feed = 5
                 inventory.water = 5
                 inventory.save()
 
-            print(f"🔹 [구매 요청] 유저: {user.username}, 아이템: {item_name}, 개수: {quantity}")
+            print(f"🔹 [구매 요청] 유저: {user_display_name}, 아이템: {item_name}, 개수: {quantity}")
             print(f"🔹 [잔여 코인] {coin.amount} → 필요 코인: {item.price * quantity}")
 
             total_price = item.price * quantity
@@ -60,10 +61,8 @@ def buy_item(request):
     return JsonResponse({"error": "잘못된 요청입니다"}, status=400)
 
 
+#아이템 목록 반환 api
 @login_required
 def get_items(request):
-    """
-    ✅ 모든 아이템 목록을 반환하는 API
-    """
     items = Item.objects.all().values("name", "category", "price")
     return JsonResponse(list(items), safe=False)

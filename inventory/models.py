@@ -122,7 +122,7 @@ class Inventory(models.Model):
 
         return inventory_data
     def __str__(self):
-        return f"{self.user.username}의 인벤토리"
+        return f"{self.user.nickname or self.user.email}의 인벤토리"
 
 
     def feed_pet(self, pet, feed_type="feed"):
