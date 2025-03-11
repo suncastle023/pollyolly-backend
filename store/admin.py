@@ -98,5 +98,5 @@ class InventoryAdmin(admin.ModelAdmin):
             </form>
             """
             return HttpResponse(form_html)
-
-admin.site.register(Inventory, InventoryAdmin)
+        
+        

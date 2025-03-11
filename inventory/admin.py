@@ -55,6 +55,3 @@ class InventoryAdmin(admin.ModelAdmin):
         messages.success(request, f"{refunded_count}개 아이템이 환불되었습니다.")
         return redirect("..")
 
-# ✅ 이미 등록된 경우 다시 등록하지 않도록 처리
-if not admin.site.is_registered(Inventory):
-    admin.site.register(Inventory, InventoryAdmin)
