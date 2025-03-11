@@ -211,8 +211,13 @@ class Pet(models.Model):
         if self.health <= 0:
             return False, "펫의 체력이 부족합니다."
 
-        # 경험치 증가량: 레벨이 높을수록 경험치 증가량은 줄어듭니다.
+         # 기본 경험치 증가량 (레벨이 높을수록 경험치 증가량 감소)
         exp_gain = max(10 - (self.level - 1), 1)
+
+        # 체력이 100 이상이면 경험치 2배 증가
+        if self.health >= 100:
+            exp_gain *= 2
+
         # 체력 소모: 5만큼 감소 (최소 0)
         self.health = max(self.health - 5, 0)
         # 장난감 개수 감소 후 저장
@@ -222,9 +227,9 @@ class Pet(models.Model):
         # 경험치 증가 및 레벨업 여부 판단
         leveled_up = self.gain_experience(exp_gain)
         if leveled_up:
-            message = f"🎉 {self.name}의 레벨이 {self.level}이 되었습니다! 축하합니다!"
+            message = f"{self.name}의 레벨이 {self.level}이 되었습니다! 축하합니다!"
         else:
-            message = "펫이 장난감으로 놀았습니다!"
+            message = f"펫이 장난감으로 놀았습니다! (+{exp_gain} 경험치)"
 
         return leveled_up, message
 
@@ -249,7 +254,7 @@ class Pet(models.Model):
             self.health = max(self.health - 1, 0)
             self.last_activity += timedelta(hours=1)
 
-        if self.health == 0:
+        if self.health <= 0:
             self.set_pet_status("neglected")  # ✅ 체력이 0이면 관리 부족으로 사망 처리
 
         self.save()
