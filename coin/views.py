@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from rest_framework import status
 from inventory.models import Inventory
 import logging
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -52,72 +53,76 @@ class StepRewardAPIView(APIView):
         })
 
 
+
 class ClaimCoinAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request):
-        if not request.user.is_authenticated:
-            return Response({"error": "User is not authenticated"}, status=status.HTTP_403_FORBIDDEN)
+        # 사용자 인증은 permission_classes에서 처리되므로 여기선 생략 가능
+        coin, _ = Coin.objects.select_for_update().get_or_create(user=request.user)
 
-        coin, _ = Coin.objects.get_or_create(user=request.user)
-
+        # pending_rewards가 리스트가 아닌 경우 초기화
         if not isinstance(coin.pending_rewards, list):
             coin.pending_rewards = []
 
-
+        # pending_rewards와 pending_coins 불일치 시, 최소한의 수정 수행
         if len(coin.pending_rewards) != coin.pending_coins:
-            logger.warning(f"⚠️ {coin.user}의 보류 코인({coin.pending_coins})과 보류 보상({len(coin.pending_rewards)}) 불일치 감지")
-            
-            if len(coin.pending_rewards) < coin.pending_coins:
-                missing_rewards = [{"feed": 0, "toy1": 0} for _ in range(coin.pending_coins - len(coin.pending_rewards))]
-                coin.pending_rewards.extend(missing_rewards)
+            diff = coin.pending_coins - len(coin.pending_rewards)
+            if diff > 0:
+                # 누락된 보상이 있다면 필요한 개수만큼 추가
+                coin.pending_rewards.extend([{"feed": 0, "toy1": 0} for _ in range(diff)])
             else:
+                # 초과된 보상이 있다면 잘라냄
                 coin.pending_rewards = coin.pending_rewards[:coin.pending_coins]
-
-            coin.save()
+            coin.save(update_fields=['pending_rewards'])
 
         if coin.pending_coins > 0 and coin.pending_rewards:
-            reward = coin.pending_rewards.pop(0) 
+            reward = coin.pending_rewards.pop(0)
 
-            coin.amount += 1  
+            coin.amount += 1
             coin.pending_coins -= 1
 
             feed_bonus = reward.get("feed", 0)
-            toy1_bonus = reward.get("toy1", 0) 
+            toy1_bonus = reward.get("toy1", 0)
 
             if coin.pending_feed >= feed_bonus:
                 coin.pending_feed -= feed_bonus
             else:
-                feed_bonus = 0 
+                feed_bonus = 0
 
             if coin.pending_toy1 >= toy1_bonus:
                 coin.pending_toy1 -= toy1_bonus
-                toy_bonus = toy1_bonus 
+                toy_bonus = toy1_bonus
             else:
-                toy_bonus = 0  
+                toy_bonus = 0
 
+            # 필요한 필드만 업데이트
+            coin.save(update_fields=[
+                'amount', 'pending_coins', 'pending_feed', 'pending_toy1', 'pending_rewards'
+            ])
 
+            # 인벤토리 업데이트
             inventory, _ = Inventory.objects.get_or_create(user=request.user)
             inventory.feed += feed_bonus
-            inventory.toy1 += toy_bonus 
-            inventory.save()
-
-            coin.save()
+            inventory.toy1 += toy_bonus
+            inventory.save(update_fields=['feed', 'toy1'])
 
             return Response({
                 "message": "1 reward claimed successfully",
                 "claimed_coin": 1,
                 "claimed_feed": feed_bonus,
-                "claimed_toy1": toy_bonus, 
+                "claimed_toy1": toy_bonus,
                 "total_coins": coin.amount,
                 "pending_coins": coin.pending_coins,
                 "pending_feed": coin.pending_feed,
-                "pending_toy1": coin.pending_toy1, 
+                "pending_toy1": coin.pending_toy1,
                 "total_feed": inventory.feed,
-                "total_toy1": inventory.toy1,  
+                "total_toy1": inventory.toy1,
             })
         else:
             return Response({"message": "No rewards to claim"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 # ✅ 유저의 현재 코인 잔액을 반환하는 API
