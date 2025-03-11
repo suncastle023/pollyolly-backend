@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
 import json
-from users.models import CustomUser 
+from accounts.models import CustomUser 
 
 class BuyItemAPIView(APIView):
     permission_classes = [IsAuthenticated]
