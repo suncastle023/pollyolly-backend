@@ -12,56 +12,36 @@ class Pet(models.Model):
     ]
 
     PET_TYPES = {
-        "dog": ["shiba_inu", "retriever", "poodle", "benny_sad", "polly"],
-        "cat": ["russian_blue", "siamese", "munchkin"],
-        "rabbit": ["rabbit"],
-        "hamster": ["hamster"],
-        "turtle": ["turtle"],
-        "bird": ["parrot"],
-        "fish": ["gold_fish", "tropical_fish"],
-        "yokai": ["ninetail", "hatch", "phoenix"],
-        "griffon": ["griffon"],
-        "unicorn": ["unicorn"],
-        "dragon": ["dragon"],
+        "dog": ["blackDog", "whiteDog", "yellowDog"],
+        "cat": ["Cat"],
     }
 
     LEVEL_UNLOCKS = [
         (1, ["dog", "cat"]),
-        (4, ["hamster", "fish"]),
-        (11, ["bird", "turtle"]),
-        (20, ["griffon"]),
-        (26, ["yokai"]),
-        (31, ["unicorn"]),
-        (41, ["dragon"]),
     ]
 
 
+
     IMAGE_PATHS = {
-        "polly": "assets/pet_images/polly.png",
-        "pollyL": "assets/pet_images/pollyL.png",
-        "pollyR": "assets/pet_images/pollyR.png",
-        "dirty_polly": "assets/pet_images/dirty_polly.png",
-        "dirty_pollyL": "assets/pet_images/dirty_pollyL.png",
-        "dirty_pollyR": "assets/pet_images/dirty_pollyR.png",
-        "benny_sad": "assets/pet_images/benny_sad.png",
-        "shiba_inu": "assets/pet_images/shiba_inu.png",
-        "retriever": "assets/pet_images/retriever.png",
-        "poodle": "assets/pet_images/poodle.png",
-        "russian_blue": "assets/pet_images/russian_blue.png",
-        "siamese": "assets/pet_images/siamese.png",
-        "munchkin": "assets/pet_images/munchkin.png",
-        "rabbit": "assets/pet_images/rabbit.png",
-        "hamster": "assets/pet_images/hamster.png",
-        "turtle": "assets/pet_images/turtle.png",
-        "parrot": "assets/pet_images/parrot.png",
-        "gold_fish": "assets/pet_images/gold_fish.png",
-        "tropical_fish": "assets/pet_images/tropical_fish.png",
-        "ninetail": "assets/pet_images/ninetail.png",
-        "hatch": "assets/pet_images/hatch.png",
-        "phoenix": "assets/pet_images/phoenix.png",
-        "griffon": "assets/pet_images/griffon.png",
-        "unicorn": "assets/pet_images/unicorn.png",
-        "dragon": "assets/pet_images/dragon.png",
+        "whiteDog": "assets/pet_images/whiteDog.png",
+        "whiteDogR": "assets/pet_images/whiteDogR.png",
+        "whiteDogR": "assets/pet_images/whiteDogL.png",
+        "dtywhiteDog": "assets/pet_images/dtywhiteDog.png",
+        "dtywhiteDog": "assets/pet_images/dtywhiteDogR.png",
+        "dtywhiteDog": "assets/pet_images/dtywhiteDogL.png",
+
+        "yellowDog": "assets/pet_images/yellowDog.png",
+        "yellowDogL": "assets/pet_images/yellowDogL.png",
+        "yellowDogR": "assets/pet_images/yellowDogR.png",
+
+        "blackDog": "assets/pet_images/blackDog.png",
+        "blackDogL": "assets/pet_images/blackDogL.png",
+        "blackDogR": "assets/pet_images/blackDogR.png",
+
+        "Cat": "assets/pet_images/Cat.png",
+        "CatL": "assets/pet_images/CatL.png",
+        "CatR": "assets/pet_images/CatR.png",
+
     }
 
 
