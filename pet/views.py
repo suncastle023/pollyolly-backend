@@ -6,6 +6,7 @@ from .models import Pet
 from .serializers import PetSerializer
 from rest_framework.views import APIView
 
+
 class PetCreateView(generics.CreateAPIView):
     serializer_class = PetSerializer
     permission_classes = [IsAuthenticated]
@@ -18,15 +19,16 @@ class PetCreateView(generics.CreateAPIView):
 
         level = user.level 
         pet_name = request.data.get("name", "새로운 펫")
-        pet_type = request.data.get("pet_type")  # ✅ 사용자가 선택한 pet_type
+        pet_type = request.data.get("pet_type") 
+        breed = request.data.get("breed") 
 
         if not pet_type or pet_type not in Pet.PET_TYPES:
             return Response({"error": "유효하지 않은 펫 유형입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ✅ 사용자가 선택한 pet_type의 breed 중 랜덤 선택
-        breed = random.choice(Pet.PET_TYPES[pet_type])
+        if not breed or breed not in Pet.PET_TYPES[pet_type]:
+            return Response({"error": "유효하지 않은 품종입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ✅ 선택한 pet_type과 breed를 사용하여 펫 생성
+        # 선택한 pet_type과 breed를 사용하여 펫 생성
         pet = Pet.objects.create(owner=user, name=pet_name, pet_type=pet_type, breed=breed)
         serializer = PetSerializer(pet)
 
